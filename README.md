@@ -6,6 +6,8 @@
 ## Principles
 Equations and discretization with grid
 
+Over-relaxatio and why
+
 ## Optimizations
 Multithreading, other stuff
 
