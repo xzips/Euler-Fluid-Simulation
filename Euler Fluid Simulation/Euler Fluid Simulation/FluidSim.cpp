@@ -2,7 +2,7 @@
 
 #include <string>
 
-
+#include <iostream>
 
 FluidSim::FluidSim(SimParameters simParams, DisplayParameters displayParams)
 {
@@ -141,13 +141,13 @@ the inflow velocity equally to the neighboring cells.
 */
 void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 {
-	size_t n = simParams.n_x;
+	size_t n = simParams.n_y;
 	float cp = simParams.density * simParams.gridSpacing / dt;
 
 	for (size_t iteration = 0; iteration < numIterations; iteration++) {
 
-		for (size_t i = 1; i < simParams.n_x - 1; i++) {
-			for (size_t j = 1; j < simParams.n_y - 1; j++) {
+		for (size_t i = 1; i < simParams.n_x - 2; i++) {
+			for (size_t j = 1; j < simParams.n_y - 2; j++) {
 
 				//if the cell is a boundary cell
 				if (sField[i * n + j] == 0.0)
@@ -168,9 +168,24 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 				float div =
 					+ uField[(i + 1) * n + j]
 					- uField[i * n + j]
-					+ uField[i * n + j + 1]
-					- uField[i * n + j];
+					+ vField[i * n + j + 1]
+					- vField[i * n + j];
 
+				if (std::abs(div) > 100)
+				{
+					//pritn current U field values
+
+					//print u field at the cell
+					std::cerr << "uField[" << i << "][" << j << "] = " << uField[i * n + j] << std::endl;
+					//print u field at the cell
+					std::cerr << "uField[" << i + 1 << "][" << j << "] = " << uField[(i + 1) * n + j] << std::endl;
+					//print u field at the cell
+					std::cerr << "uField[" << i << "][" << j + 1 << "] = " << uField[i * n + j + 1] << std::endl;
+					//print u field at the cell
+					std::cerr << "uField[" << i << "][" << j << "] = " << uField[i * n + j] << std::endl;
+
+					std::cout << "div = " << div << std::endl;
+				}
 				
 				float p = -div / s;
 				p *= simParams.overRelaxation;
@@ -191,6 +206,7 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 					return;
 
 				}
+
 
 				pField[i * n + j] += cp * p;
 
@@ -245,6 +261,8 @@ float FluidSim::SampleField(float x, float y, FieldType field) {
 	case FieldType::U_FIELD: f = uField; dy = h2; break;
 	case FieldType::V_FIELD: f = vField; dx = h2; break;
 	case FieldType::S_FIELD: f = mField; dx = h2; dy = h2; break;
+	case FieldType::P_FIELD: f = pField; dx = h2; dy = h2; break;
+	case FieldType::M_FIELD: f = mField; dx = h2; dy = h2; break;
 
 	}
 
@@ -268,6 +286,8 @@ float FluidSim::SampleField(float x, float y, FieldType field) {
 		tx * sy * f[x1 * n + y0] +
 		tx * ty * f[x1 * n + y1] +
 		sx * ty * f[x0 * n + y1];
+
+
 
 	return val;
 }
@@ -312,8 +332,8 @@ void FluidSim::AdvectVel(float dt) {
 
 			// u component
 			if (sField[i * n + j] != 0.0 && sField[(i - 1) * n + j] != 0.0 && j <simParams.n_y - 1) {
-				size_t x = i * h;
-				size_t y = j * h + h2;
+				float x = i * h;
+				float y = j * h + h2;
 				float u = uField[i * n + j];
 				float v = avgV(i, j);
 				x = x - dt * u;
@@ -323,8 +343,8 @@ void FluidSim::AdvectVel(float dt) {
 			}
 			// v component
 			if (sField[i * n + j] != 0.0 && sField[i * n + j - 1] != 0.0 && i < simParams.n_x - 1) {
-				size_t x = i * h + h2;
-				size_t y = j * h;
+				float x = i * h + h2;
+				float y = j * h;
 				float u = avgU(i, j);
 				float v = vField[i * n + j];
 				x = x - dt * u;
@@ -388,7 +408,7 @@ void FluidSim::AdvectSmoke(float dt) {
 
 void FluidSim::Simulate(float dt) {
 
-	ApplyGravity(dt, simParams.gravity);
+	//ApplyGravity(dt, simParams.gravity);
 
 	//this.p.fill(0.0);
 	
@@ -404,3 +424,41 @@ void FluidSim::Simulate(float dt) {
 	AdvectSmoke(dt);
 }
 
+
+
+
+void FluidSim::SetObstacle(float x, float y, float r) {
+
+	float vx = 0.0;
+	float vy = 0.0;
+
+	
+
+	
+	size_t n = simParams.n_x;
+	float cd = sqrt(2) * simParams.gridSpacing;
+
+	for (size_t i = 1; i < simParams.n_x - 2; i++) {
+		for (size_t j = 1; j < simParams.n_y - 2; j++) {
+
+			sField[i * n + j] = 1.0;
+
+			float dx = (i + 0.5) * simParams.gridSpacing - x;
+			float dy = (j + 0.5) * simParams.gridSpacing - y;
+
+			if (dx * dx + dy * dy < r * r) {
+				sField[i * n + j] = 0.0;
+		
+				mField[i * n + j] = 1.0;
+				uField [i * n + j] = vx;
+				uField[(i + 1) * n + j] = vx;
+				vField[i * n + j] = vy;
+				vField[i * n + j + 1] = vy;
+
+				//std::cout << "i: " << i << " j: " << j << std::endl;
+				
+			}
+		}
+	}
+	
+}

@@ -4,7 +4,9 @@
 enum class FieldType {
 	U_FIELD,
 	V_FIELD,
-	S_FIELD
+	S_FIELD,
+	P_FIELD,
+	M_FIELD
 };
 
 
@@ -38,14 +40,14 @@ class SimParameters
 {
 public:
 	float density = 1000.f;
-	size_t n_x = 30 + 2;
-	size_t n_y = 30 + 2;
+	size_t n_x = 60 + 2;
+	size_t n_y = 60 + 2;
 	size_t n_cells = n_x * n_y;
 	
 	float gridSpacing = 1.f / (float)n_x;
 	
 	float gravity = 0.f;
-	size_t numIterations = 100;
+	size_t numIterations = 40;
 	float overRelaxation = 1.9;
 
 	float obstacleX;
@@ -93,7 +95,7 @@ public:
 
 	bool CheckFieldsExploded();
 
-
+	void SetObstacle(float x, float y, float r);
 
 	float avgU(size_t i, size_t j);
 	float avgV(size_t i, size_t j);
