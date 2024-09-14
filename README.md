@@ -20,6 +20,7 @@ The solver successfully simulates fluid flow in various setups, such as a wind t
 - Clean-up code in main function, make everything more modular
 - Allow importing of arbitrary boundary models (like from a PNG image)
 - Basic optimizations (limiting memcpy, optimzing loops, etc)
+- Add more visualizations (streamlines, pressure, vorticity, velocity)
 - Deeper optimzation (utilizing AVX512 instructions for parellelization, and finally multithread everything)
 
 ### Resources Used
