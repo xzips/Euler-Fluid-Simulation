@@ -40,7 +40,7 @@ class SimParameters
 {
 public:
 	float density = 1000.f;
-	size_t n_x = 200 + 2;
+	size_t n_x = 300 + 2;
 	size_t n_y = 200 + 2;
 	size_t n_cells = n_x * n_y;
 	

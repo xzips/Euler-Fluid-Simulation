@@ -14,22 +14,27 @@ int main()
 	FluidSim fluidSim = FluidSim(simParams, displayParams);
 	
 	//window
-	sf::RenderWindow window(sf::VideoMode(800, 800), "Euler Fluid Simulation");
+	sf::RenderWindow window(sf::VideoMode(1200, 800), "Euler Fluid Simulation");
 
 	//framerate limit to 60
 	window.setFramerateLimit(600);
 
 	//create RenderTexture
-	sf::RenderTexture renderTexture;
-	renderTexture.create(800, 800);
+	sf::Image image;
+	image.create(1200, 800);
+
+	sf::Texture texture;
+
+	texture.loadFromImage(image);
 
 
+	sf::Sprite sprite(texture);
 
 	//fluidSim.SetObstacle(16, 16, 10);
 
 
 
-	float inVel = 2;
+	float inVel = 3;
 
 	for (size_t i = 0; i < simParams.n_x; i++) {
 		for (size_t j = 0; j < simParams.n_y; j++) {
@@ -51,29 +56,23 @@ int main()
 
 
 
-	float pipeH = 0.07 * simParams.n_y;
+	float pipeH = 0.05 * simParams.n_y;
 	size_t minJ = std::floor(0.5 * simParams.n_y - 0.5 * pipeH);
 	size_t maxJ = std::floor(0.5 * simParams.n_y + 0.5 * pipeH);
 
 
 
-	for (size_t j = minJ; j < maxJ; j++)
-		fluidSim.mField[2 * simParams.n_y + j] = 0.0;
 
-
-	
 	
 	//create text object for drawing cell values
-	
+	/*
 	sf::Font font;
 	if (!font.loadFromFile("C:\\Users\\aspen\\Desktop\\SFMLFonts\\Helvetica.ttf"))
 	{
 		std::cout << "Error loading font" << std::endl;
 	}
-
-	sf::Text text;
-	text.setFont(font);
-	text.setCharacterSize(10);
+	*/
+	
 
 	while (window.isOpen())
 	{
@@ -114,52 +113,57 @@ int main()
 			}
 		}
 
-		//std::cout << "min P: " << min_P << " max P: " << max_P << std::endl;
 
-		//sample V field and draw it
-		for (size_t i = 0; i < simParams.n_x; i++)
+		for (size_t j = minJ; j < maxJ; j++)
+			fluidSim.mField[2 * simParams.n_y + j] = 0.0;
+
+
+
+
+
+		sf::Color color;
+
+		//for each pixel in the texture, set the color based on the mapped pressure value
+		for (size_t i = 0; i < window.getSize().x; i++)
 		{
-			for (size_t j = 0; j < simParams.n_y; j++)
+			for (size_t j = 0; j < window.getSize().y; j++)
 			{
 
-				float P_norm = 1- (fluidSim.mField[i * simParams.n_y + j] - min_P) / (max_P - min_P);
-
-				//draw the pressure field as a rectangle with the color of the pressure value
-				sf::RectangleShape rect(sf::Vector2f(800.f / simParams.n_x, 800.f / simParams.n_y));
-				rect.setPosition(i * 800.f / simParams.n_x, j * 800.f / simParams.n_y);
-				rect.setFillColor(sf::Color(255 * P_norm, 255 * P_norm, 255 * P_norm, 255));
-
-				//if S field greater than 0 change rect color to blue
-				if (fluidSim.sField[i * simParams.n_y + j] == 0)
-					rect.setFillColor(sf::Color(0, 0, 255, 255));
-
-
-
-				window.draw(rect);
-
-				//set text position to the cell
-				//text.setPosition(i * 800.f / simParams.n_x, j * 800.f / simParams.n_y);
-				//set the text string to the value of the cell
-				//std::string dispStr = std::to_string((long int)fluidSim.SampleField(i, j, FieldType::V_FIELD));
-
-				//p field
-				//std::string dispStr = std::to_string(P_norm);
+				size_t mapped_i = i * simParams.n_x / window.getSize().x;
+				size_t mapped_j = j * simParams.n_y / window.getSize().y;
 				
-				//text.setString(dispStr);
-				//draw the text
-				//window.draw(text);
+				float P_norm = (fluidSim.mField[mapped_i * simParams.n_y + mapped_j] - min_P) / (max_P - min_P);
+
+				color.r = (255 * P_norm);
+				color.g = (255 * P_norm);
+				color.b = (255 * P_norm);
 
 
+
+
+				if (fluidSim.sField[mapped_i * simParams.n_y + mapped_j] == 0)
+					color = sf::Color(0, 0, 255, 255);
+
+
+				image.setPixel(i, j, color);
 			}
+			
 		}
+
+		//update the texture
+		texture.loadFromImage(image);
+		
+
+
+	
 		
 
 	
 
 		//simulate the fluid
-		fluidSim.Simulate(0.005f);
+		fluidSim.Simulate(0.01f);
 
-
+		window.draw(sprite);
 
 
 		//draw the window
