@@ -1,19 +1,19 @@
 # Multithreaded Eulerian Fluid Simulation
 
+https://github.com/user-attachments/assets/f3e7131d-6818-44fa-ac38-f218c1b43f15
+
 ## Overview
-... Description and Intro...
+This project implements an Eulerian fluid solver in C++, capable of simulating fluid flow around objects such as a circle or an airfoil. The solver discretizes the fluid domain using a grid-based approach, solving the Euler equations numerically to capture the fluid's motion.
 
 ## Principles
-Equations and discretization with grid
-
-Over-relaxatio and why
+The simulation is based on solving the Euler equations for inviscid flow using finite difference methods. A structured grid is employed to discretize the domain, with each cell representing velocity and pressure values. The simulation progresses over time, solving for changes in these values across the grid.
 
 ## Optimizations
-Multithreading, other stuff
+Writing this in C++ already offers excellent performance, but I plan to implement additional optimizaitons in the future, and this section will be updated accordingly.
 
 
 ## Results
-Wind tunnel of circle, airfoil, etc
+The solver successfully simulates fluid flow in various setups, such as a wind tunnel around a circle or an airfoil, showing vortex shedding and flow separation where applicable. The results match expected physical behaviors for incompressible flows.
 
 ### Resources Used
 - https://en.wikipedia.org/wiki/Euler_equations_(fluid_dynamics)
