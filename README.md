@@ -17,7 +17,7 @@ Writing this in C++ already offers excellent performance, but I plan to implemen
 The solver successfully simulates fluid flow in various setups, such as a wind tunnel around a circle or an airfoil, showing vortex shedding and flow separation where applicable. The results match expected physical behaviors for incompressible flows.
 
 ## Current Next Steps
-- Clean-up code in main function, make everything more modular
+- ✅Clean-up code in main function, make everything more modular
 - Allow importing of arbitrary boundary models (like from a PNG image)
 - Basic optimizations (limiting memcpy, optimzing loops, etc)
 - Add more visualizations (streamlines, pressure, vorticity, velocity)
