@@ -306,8 +306,8 @@ void FluidSim::AdvectVel(float dt) {
 				x = x - dt * u;
 				y = y - dt * v;
 				v = SampleField(x, y, FieldType::V_FIELD);
-			}				newVField[i * n + j] = v;
-
+				newVField[i * n + j] = v;
+			}
 		}
 	}
 

@@ -16,14 +16,14 @@ int main()
 	FluidSim fluidSim = FluidSim(simParams, displayParams);
 	
 	//window
-	sf::RenderWindow window(sf::VideoMode(1920, 1920), "Euler Fluid Simulation");
+	sf::RenderWindow window(sf::VideoMode(800, 800), "Euler Fluid Simulation");
 
 	//framerate limit to 60
 	window.setFramerateLimit(600);
 
 	//create RenderTexture
 	sf::Image image;
-	image.create(1920, 1920);
+	image.create(800, 800);
 
 	sf::Texture texture;
 
@@ -123,13 +123,13 @@ int main()
 		//	fluidSim.mField[2 * simParams.n_y + j] = 0.0;
 
 
-		size_t smokeStreamThickness = 10;
+		size_t smokeStreamThickness = 6;
 
 		size_t j_start = simParams.n_y/2 - smokeStreamThickness;
 		size_t j_end = simParams.n_y/2 + smokeStreamThickness;
 
 		//add a rectangle of dye on the left middle
-		for (size_t i = 0; i < 3; i++)
+		for (size_t i = 0; i < 2; i++)
 			for (size_t j = j_start; j < j_end; j++)
 				fluidSim.mField[i * simParams.n_y + j] = 0.0;
 
@@ -191,7 +191,7 @@ int main()
 		window.draw(sprite);
 
 		//save the currnet image to up 2 folders and into "images"
-		image.saveToFile("C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Images\\image" + std::to_string(imageCount) + ".png");
+		//image.saveToFile("C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Images\\image" + std::to_string(imageCount) + ".png");
 
 		imageCount += 1;
 
