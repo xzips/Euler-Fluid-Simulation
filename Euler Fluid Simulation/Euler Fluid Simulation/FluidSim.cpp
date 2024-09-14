@@ -43,8 +43,90 @@ FluidSim::FluidSim(SimParameters simParams, DisplayParameters displayParams)
 	{
 		mField[i] = 1.0;
 	}
+
+	image.create(displayParams.windowWidth, displayParams.windowHeight);
+	texture.loadFromImage(image);
+
+	sprite.setTexture(texture);
+
+
 }
 
+
+void FluidSim::Render(sf::RenderWindow& window)
+{
+
+	if (displayParams.showSmoke)
+	{
+		float min_M = INFINITY;
+		float max_M = -INFINITY;
+
+		//find min and max
+		for (size_t i = 1; i < simParams.n_x; i++)
+		{
+			for (size_t j = 1; j < simParams.n_y; j++)
+			{
+				if (mField[i * simParams.n_y + j] < min_M)
+					min_M = mField[i * simParams.n_y + j];
+				if (mField[i * simParams.n_y + j] > max_M)
+					max_M = mField[i * simParams.n_y + j];
+			}
+		}
+
+		
+
+		sf::Color color;
+
+		//for each pixel in the texture, set the color based on the mapped pressure value
+		for (size_t i = 0; i < window.getSize().x; i++)
+		{
+			for (size_t j = 0; j < window.getSize().y; j++)
+			{
+
+				size_t mapped_i = i * simParams.n_x / window.getSize().x;
+				size_t mapped_j = j * simParams.n_y / window.getSize().y;
+
+
+
+
+				float M_norm = 1 - (mField[mapped_i * simParams.n_y + mapped_j] - min_M) / (max_M - min_M);
+
+
+				if (M_norm < 0)
+					M_norm = 0;
+
+				if (M_norm > 1)
+					M_norm = 1;
+
+				color.r = (255 * M_norm);
+				color.g = (255 * M_norm);
+				color.b = (255 * M_norm);
+
+
+
+
+				if (sField[mapped_i * simParams.n_y + mapped_j] == 0)
+					color = sf::Color(28, 91, 152, 255);
+
+
+				image.setPixel(i, j, color);
+			}
+
+		}
+
+	}
+
+
+	//update the texture
+	texture.loadFromImage(image);
+
+	//draw sprite
+	window.draw(sprite);
+	
+
+
+	
+}
 
 
 bool FluidSim::CheckFieldsExploded()
@@ -358,6 +440,7 @@ void FluidSim::AdvectSmoke(float dt) {
 
 
 void FluidSim::Simulate(float dt) {
+	ApplyDyeSources();
 
 	//ApplyGravity(dt, simParams.gravity);
 	
@@ -372,9 +455,49 @@ void FluidSim::Simulate(float dt) {
 	Extrapolate();
 	AdvectVel(dt);
 	AdvectSmoke(dt);
+
+
 }
 
+void FluidSim::ApplyDyeSources()
+{
+	for (auto& dyeSource : simParams.dyeSources)
+	{
+		//for each one, assume that x and y are in world coordinates i.e. 0 to 1, and centered where rect should be
+		//so need to first find the cell that the center of the rect is in, and then use two for loops to add dye to the cells in the rect
+		//ensure that we check for boundary conditions
+		float x = dyeSource.x * simParams.n_x;
+		float y = dyeSource.y * simParams.n_y;
+		
+		float width = dyeSource.width * simParams.n_x;
+		float height = dyeSource.height * simParams.n_y;
 
+		for (size_t i = x - width / 2; i < x + width / 2; i++)
+		{
+			for (size_t j = y - height / 2; j < y + height / 2; j++)
+			{
+				if (i >= 1 && i < simParams.n_x - 1 && j >= 1 && j < simParams.n_y - 1)
+				{
+					mField[i * simParams.n_y + j] = dyeSource.density;
+				}
+			}
+		}
+
+	}
+}
+
+void FluidSim::AddDyeSource(float x, float y, float width, float height, float density = 0)
+{
+	RectangularDyeSource source;
+	source.x = x;
+	source.y = y;
+	source.width = width;
+	source.height = height;
+	source.density = density;
+
+	simParams.dyeSources.push_back(source);
+
+}
 
 
 void FluidSim::SetObstacle(float x, float y, float r) {
@@ -391,7 +514,7 @@ void FluidSim::SetObstacle(float x, float y, float r) {
 	for (size_t i = 1; i < simParams.n_x - 2; i++) {
 		for (size_t j = 1; j < simParams.n_y - 2; j++) {
 
-			sField[i * n + j] = 1.0;
+			//sField[i * n + j] = 1.0;
 
 			float dx = (i + 0.5) * simParams.gridSpacing - x;
 			float dy = (j + 0.5) * simParams.gridSpacing - y;

@@ -1,5 +1,6 @@
 #include <iostream>
-
+#include "SFML/Graphics.hpp"
+#include <vector>
 
 enum class FieldType {
 	U_FIELD,
@@ -15,6 +16,26 @@ enum class FieldType {
 class Obstacle
 {
 	//todo later
+};
+
+
+class RectangularDyeSource
+{
+public:
+	RectangularDyeSource(float x, float y, float width, float height, float density = 0.f) {
+		this->x = x;
+		this->y = y;
+		this->width = width;
+		this->height = height;
+		this->density = density;
+	}
+
+	RectangularDyeSource() {}
+	float x = 0.5;
+	float y = 0.5;
+	float width = 0.1;
+	float height = 0.1;
+	float density = 0.f;
 };
 
 class SimParameters
@@ -35,6 +56,8 @@ public:
 	float obstacleY;
 	float obstacleRadius;
 
+	std::vector<RectangularDyeSource> dyeSources;
+
 
 	void SetGridSize(size_t n_x, size_t n_y) {
 		this->n_x = n_x + 2;
@@ -46,6 +69,15 @@ public:
 };
 
 class DisplayParameters {
+public:
+
+	
+	size_t windowWidth = 800;
+	size_t windowHeight = 800;
+	size_t maxFps = 60;
+	size_t frameCount = 0;
+	
+	
 	bool paused = false;
 	bool showObstacle = true;
 	bool showStreamlines = false;
@@ -78,14 +110,23 @@ public:
 
 	void SetObstacle(float x, float y, float r);
 
+	void ApplyDyeSources();
+
+	void AddDyeSource(float x, float y, float width, float height, float density);
+
 	float avgU(size_t i, size_t j);
 	float avgV(size_t i, size_t j);
 	
 	SimParameters simParams;
 	DisplayParameters displayParams;
 
-	
+	sf::Image image;
+	sf::Texture texture;
+	sf::Sprite sprite;
 
+	void Render(sf::RenderWindow& window);
+
+	
 
 	float * uField; //horizontal velocity field
 	float * vField; //vertical velocity field

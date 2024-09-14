@@ -21,22 +21,9 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 871,
-          "SelectedChildIndex": 1,
+          "DockedWidth": 596,
+          "SelectedChildIndex": 0,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "FluidSim.hpp",
-              "DocumentMoniker": "C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation\\FluidSim.hpp",
-              "RelativeDocumentMoniker": "Euler Fluid Simulation\\FluidSim.hpp",
-              "ToolTip": "C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation\\FluidSim.hpp",
-              "RelativeToolTip": "Euler Fluid Simulation\\FluidSim.hpp",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAABgAAAAPAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2024-09-13T15:27:06.299Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
@@ -45,15 +32,28 @@
               "RelativeDocumentMoniker": "Euler Fluid Simulation\\Euler Fluid Simulation.cpp",
               "ToolTip": "C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation.cpp",
               "RelativeToolTip": "Euler Fluid Simulation\\Euler Fluid Simulation.cpp",
-              "ViewState": "AQIAAJYAAAAAAAAAAAAAAIMAAAAaAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABAAAAAdAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-09-13T15:16:03.255Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "FluidSim.hpp",
+              "DocumentMoniker": "C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation\\FluidSim.hpp",
+              "RelativeDocumentMoniker": "Euler Fluid Simulation\\FluidSim.hpp",
+              "ToolTip": "C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation\\FluidSim.hpp",
+              "RelativeToolTip": "Euler Fluid Simulation\\FluidSim.hpp",
+              "ViewState": "AQIAAAwAAAAAAAAAAAAAAD0AAAARAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
+              "WhenOpened": "2024-09-13T15:27:06.299Z",
               "EditorCaption": ""
             }
           ]
         },
         {
-          "DockedWidth": 891,
+          "DockedWidth": 1166,
           "SelectedChildIndex": 0,
           "Children": [
             {
@@ -64,7 +64,7 @@
               "RelativeDocumentMoniker": "Euler Fluid Simulation\\FluidSim.cpp",
               "ToolTip": "C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation\\FluidSim.cpp",
               "RelativeToolTip": "Euler Fluid Simulation\\FluidSim.cpp",
-              "ViewState": "AQIAABQBAAAAAAAAAAArwDUBAAAEAAAA",
+              "ViewState": "AQIAADEAAAAAAAAAAAAIwGQAAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-09-13T15:27:12.665Z",
               "EditorCaption": ""
