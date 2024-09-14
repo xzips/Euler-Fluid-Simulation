@@ -227,7 +227,7 @@ float FluidSim::SampleField(float x, float y, FieldType field) {
 	switch (field) {
 	case FieldType::U_FIELD: f = uField; dy = h2; break;
 	case FieldType::V_FIELD: f = vField; dx = h2; break;
-	case FieldType::S_FIELD: f = mField; dx = h2; dy = h2; break;
+	case FieldType::S_FIELD: f = sField; dx = h2; dy = h2; break;
 	case FieldType::P_FIELD: f = pField; dx = h2; dy = h2; break;
 	case FieldType::M_FIELD: f = mField; dx = h2; dy = h2; break;
 
@@ -358,7 +358,7 @@ void FluidSim::AdvectSmoke(float dt) {
 				float x = i * h + h2 - dt * u;
 				float y = j * h + h2 - dt * v;
 
-				newMField[i * n + j] = SampleField(x, y,FieldType::S_FIELD);
+				newMField[i * n + j] = SampleField(x, y,FieldType::M_FIELD);
 			}
 		}
 	}

@@ -40,14 +40,14 @@ class SimParameters
 {
 public:
 	float density = 1000.f;
-	size_t n_x = 300 + 2;
-	size_t n_y = 200 + 2;
+	size_t n_x = 800 + 2;
+	size_t n_y = 800 + 2;
 	size_t n_cells = n_x * n_y;
 	
 	float gridSpacing = 1.f / (float)n_x;
 	
 	float gravity = 0.f;
-	size_t numIterations = 50;
+	size_t numIterations = 100;
 	float overRelaxation = 1.9;
 
 	float obstacleX;

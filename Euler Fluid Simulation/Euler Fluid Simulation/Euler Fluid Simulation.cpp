@@ -11,17 +11,19 @@ int main()
 	DisplayParameters displayParams;
 
 
+	size_t imageCount = 0;
+
 	FluidSim fluidSim = FluidSim(simParams, displayParams);
 	
 	//window
-	sf::RenderWindow window(sf::VideoMode(1200, 800), "Euler Fluid Simulation");
+	sf::RenderWindow window(sf::VideoMode(1920, 1920), "Euler Fluid Simulation");
 
 	//framerate limit to 60
 	window.setFramerateLimit(600);
 
 	//create RenderTexture
 	sf::Image image;
-	image.create(1200, 800);
+	image.create(1920, 1920);
 
 	sf::Texture texture;
 
@@ -34,7 +36,7 @@ int main()
 
 
 
-	float inVel = 3;
+	float inVel = 4;
 
 	for (size_t i = 0; i < simParams.n_x; i++) {
 		for (size_t j = 0; j < simParams.n_y; j++) {
@@ -51,14 +53,11 @@ int main()
 
 
 
-	fluidSim.SetObstacle(0.35, 0.5, 0.10);
+	fluidSim.SetObstacle(0.25, 0.5, 0.08);
 
 
 
 
-	float pipeH = 0.05 * simParams.n_y;
-	size_t minJ = std::floor(0.5 * simParams.n_y - 0.5 * pipeH);
-	size_t maxJ = std::floor(0.5 * simParams.n_y + 0.5 * pipeH);
 
 
 
@@ -98,25 +97,41 @@ int main()
 
 
 		
-		float min_P = INFINITY;
-		float max_P = -INFINITY;
+		float min_M = INFINITY;
+		float max_M = -INFINITY;
 
 		//find min and max
-		for (size_t i = 10; i < simParams.n_x; i++)
+		for (size_t i = 1; i < simParams.n_x; i++)
 		{
 			for (size_t j = 1; j < simParams.n_y; j++)
 			{
-				if (fluidSim.mField[i * simParams.n_y + j] < min_P)
-					min_P = fluidSim.mField[i * simParams.n_y + j];
-				if (fluidSim.mField[i * simParams.n_y + j] > max_P)
-					max_P = fluidSim.mField[i * simParams.n_y + j];
+				if (fluidSim.mField[i * simParams.n_y + j] < min_M)
+					min_M = fluidSim.mField[i * simParams.n_y + j];
+				if (fluidSim.mField[i * simParams.n_y + j] > max_M)
+					max_M = fluidSim.mField[i * simParams.n_y + j];
 			}
 		}
 
 
-		for (size_t j = minJ; j < maxJ; j++)
-			fluidSim.mField[2 * simParams.n_y + j] = 0.0;
+		float clipM = 0.1;
 
+		//clip p to max 1000
+		if (max_M < clipM)
+			max_M = clipM;
+
+		//for (size_t j = minJ; j < maxJ; j++)
+		//	fluidSim.mField[2 * simParams.n_y + j] = 0.0;
+
+
+		size_t smokeStreamThickness = 10;
+
+		size_t j_start = simParams.n_y/2 - smokeStreamThickness;
+		size_t j_end = simParams.n_y/2 + smokeStreamThickness;
+
+		//add a rectangle of dye on the left middle
+		for (size_t i = 0; i < 3; i++)
+			for (size_t j = j_start; j < j_end; j++)
+				fluidSim.mField[i * simParams.n_y + j] = 0.0;
 
 
 
@@ -132,17 +147,27 @@ int main()
 				size_t mapped_i = i * simParams.n_x / window.getSize().x;
 				size_t mapped_j = j * simParams.n_y / window.getSize().y;
 				
-				float P_norm = (fluidSim.mField[mapped_i * simParams.n_y + mapped_j] - min_P) / (max_P - min_P);
 
-				color.r = (255 * P_norm);
-				color.g = (255 * P_norm);
-				color.b = (255 * P_norm);
+				
 
+				float M_norm = 1- (fluidSim.mField[mapped_i * simParams.n_y + mapped_j] - min_M) / (max_M - min_M);
+
+
+				if (M_norm < 0)
+					M_norm = 0;
+
+				if (M_norm > 1)
+					M_norm = 1;
+				
+				color.r = (255 * M_norm);
+				color.g = (255 * M_norm);
+				color.b = (255 * M_norm);
+			
 
 
 
 				if (fluidSim.sField[mapped_i * simParams.n_y + mapped_j] == 0)
-					color = sf::Color(0, 0, 255, 255);
+					color = sf::Color(28, 91, 152, 255);
 
 
 				image.setPixel(i, j, color);
@@ -161,9 +186,14 @@ int main()
 	
 
 		//simulate the fluid
-		fluidSim.Simulate(0.01f);
+		fluidSim.Simulate(0.005f);
 
 		window.draw(sprite);
+
+		//save the currnet image to up 2 folders and into "images"
+		image.saveToFile("C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Images\\image" + std::to_string(imageCount) + ".png");
+
+		imageCount += 1;
 
 
 		//draw the window
