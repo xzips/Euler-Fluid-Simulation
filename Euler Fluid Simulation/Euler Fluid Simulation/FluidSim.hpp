@@ -11,11 +11,78 @@ enum class FieldType {
 };
 
 
+enum class ObstacleType {
+	SQUARE,
+	CIRCLE,
+	IMAGE
+};
 
+
+class FluidSim;
 
 class Obstacle
 {
-	//todo later
+public:
+	Obstacle(float x, float y, float radius) {
+		this->x = x;
+		this->y = y;
+		this->radius = radius;
+		this->type = ObstacleType::CIRCLE;
+	}
+
+	Obstacle(float x, float y, float width, float height) {
+		this->x = x;
+		this->y = y;
+		this->width = width;
+		this->height = height;
+		this->type = ObstacleType::SQUARE;
+	}
+
+	Obstacle(sf::Image image, float x, float y, float scale) {
+		this->modelImage = image;
+		this->type = ObstacleType::IMAGE;
+		this->scale = scale;
+	}
+
+	Obstacle() {}
+
+
+	void CreateFromRect(float x, float y, float width, float height) {
+		this->x = x;
+		this->y = y;
+		this->width = width;
+		this->height = height;
+		this->type = ObstacleType::SQUARE;
+	}
+
+	void CreateFromCircle(float x, float y, float radius) {
+		this->x = x;
+		this->y = y;
+		this->radius = radius;
+		this->type = ObstacleType::CIRCLE;
+	}
+
+	void CreateFromImage(sf::Image image, float x, float y, float scale) {
+		this->modelImage = image;
+		this->type = ObstacleType::IMAGE;
+
+	}
+	
+
+	float x = 0.5;
+	float y = 0.5;
+	float radius = 0.1;
+	float width = 0.1;
+	float height = 0.1;
+	float scale = 1;
+	ObstacleType type = ObstacleType::CIRCLE;
+	sf::Image modelImage;
+
+	void SetObstacleSField(FluidSim* fluidSim);
+
+	
+
+	
 };
 
 
@@ -52,11 +119,14 @@ public:
 	size_t numIterations = 100;
 	float overRelaxation = 1.9;
 
+	float windTunnelSpeed = 0.f;
+
 	float obstacleX;
 	float obstacleY;
 	float obstacleRadius;
 
 	std::vector<RectangularDyeSource> dyeSources;
+	std::vector<Obstacle> obstacles;
 
 
 	void SetGridSize(size_t n_x, size_t n_y) {
@@ -104,9 +174,15 @@ public:
 
 	void AdvectSmoke(float dt);
 
+	void UpdateSField();
+
 	void Simulate(float dt);
 
 	bool CheckFieldsExploded();
+
+	void Reset();
+
+	void SetupWindTunnelBoundaries();
 
 	void SetObstacle(float x, float y, float r);
 

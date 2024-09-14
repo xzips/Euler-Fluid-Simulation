@@ -3,6 +3,8 @@
 #include <string>
 
 #include <iostream>
+#include <immintrin.h>
+
 
 FluidSim::FluidSim(SimParameters simParams, DisplayParameters displayParams)
 {
@@ -52,6 +54,41 @@ FluidSim::FluidSim(SimParameters simParams, DisplayParameters displayParams)
 
 }
 
+void FluidSim::Reset()
+{
+	//fill all arrays with their default values
+	std::fill(uField, uField + simParams.n_cells, 0.0f);
+	std::fill(vField, vField + simParams.n_cells, 0.0f);
+	std::fill(sField, sField + simParams.n_cells, 1.0f);
+	std::fill(newUField, newUField + simParams.n_cells, 0.0f);
+	std::fill(newVField, newVField + simParams.n_cells, 0.0f);
+	std::fill(pField, pField + simParams.n_cells, 0.0f);
+	std::fill(mField, mField + simParams.n_cells, 1.0f);
+	std::fill(newMField, newMField + simParams.n_cells, 0.0f);
+	
+
+	
+}
+
+
+void FluidSim::SetupWindTunnelBoundaries()
+{
+	for (size_t i = 0; i < simParams.n_x; i++) {
+		for (size_t j = 0; j < simParams.n_y; j++) {
+			float s = 1.0;	// fluid
+			if (i == 0 || j == 0 || j == simParams.n_y - 1)
+			{
+				s = 0.0;	// solid
+				sField[i * simParams.n_y + j] = s;
+			}
+			
+
+			if (i == 1) {
+				uField[i * simParams.n_y + j] = simParams.windTunnelSpeed;
+			}
+		}
+	}
+}
 
 void FluidSim::Render(sf::RenderWindow& window)
 {
@@ -220,6 +257,9 @@ void FluidSim::ApplyGravity(float dt, float gravity) {
 If there is too much inflow to a cell, we need to redistribute
 the inflow velocity equally to the neighboring cells.
 */
+
+
+
 void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 {
 	size_t n = simParams.n_y;
@@ -265,11 +305,8 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 			}
 		}
 	}
-	
-
-
-
 }
+
 
 
 void FluidSim::Extrapolate() {
@@ -534,4 +571,183 @@ void FluidSim::SetObstacle(float x, float y, float r) {
 		}
 	}
 	
+}
+
+
+
+void Obstacle::SetObstacleSField(FluidSim* fluidSim)
+{
+	if (type == ObstacleType::CIRCLE)
+	{
+		float vx = 0.0;
+		float vy = 0.0;
+
+		size_t n = fluidSim->simParams.n_x;
+		float cd = sqrt(2) * fluidSim->simParams.gridSpacing;
+
+		for (size_t i = 1; i < fluidSim->simParams.n_x - 2; i++) {
+			for (size_t j = 1; j < fluidSim->simParams.n_y - 2; j++) {
+
+				//sField[i * n + j] = 1.0;
+
+				float dx = (i + 0.5) * fluidSim->simParams.gridSpacing - x;
+				float dy = (j + 0.5) * fluidSim->simParams.gridSpacing - y;
+
+				if (dx * dx + dy * dy < radius * radius) {
+					fluidSim->sField[i * n + j] = 0.0;
+
+					fluidSim->mField[i * n + j] = 1.0;
+					fluidSim->uField[i * n + j] = vx;
+					fluidSim->uField[(i + 1) * n + j] = vx;
+					fluidSim->vField[i * n + j] = vy;
+					fluidSim->vField[i * n + j + 1] = vy;
+
+					//std::cout << "i: " << i << " j: " << j << std::endl;
+
+				}
+			}
+		}
+	}
+
+	if (type == ObstacleType::SQUARE)
+	{
+		float vx = 0.0;
+		float vy = 0.0;
+
+		size_t n = fluidSim->simParams.n_x;
+		float cd = sqrt(2) * fluidSim->simParams.gridSpacing;
+
+		for (size_t i = 1; i < fluidSim->simParams.n_x - 2; i++) {
+			for (size_t j = 1; j < fluidSim->simParams.n_y - 2; j++) {
+
+				//sField[i * n + j] = 1.0;
+
+				float dx = (i + 0.5) * fluidSim->simParams.gridSpacing - x;
+				float dy = (j + 0.5) * fluidSim->simParams.gridSpacing - y;
+
+				if (dx > -width / 2 && dx < width / 2 && dy > -height / 2 && dy < height / 2) {
+					fluidSim->sField[i * n + j] = 0.0;
+
+					fluidSim->mField[i * n + j] = 1.0;
+					fluidSim->uField[i * n + j] = vx;
+					fluidSim->uField[(i + 1) * n + j] = vx;
+					fluidSim->vField[i * n + j] = vy;
+					fluidSim->vField[i * n + j + 1] = vy;
+
+					//std::cout << "i: " << i << " j: " << j << std::endl;
+
+				}
+			}
+		}
+		
+	}
+
+
+	if (type == ObstacleType::IMAGE)
+	{
+		// Black is obstacle, white is background, use brightness 128 as threshold
+
+		size_t n_x = fluidSim->simParams.n_x;
+		size_t n_y = fluidSim->simParams.n_y;
+
+		// Image dimensions
+		size_t imgWidth = modelImage.getSize().x;
+		size_t imgHeight = modelImage.getSize().y;
+
+		// Determine scaling factors to fit the image into simulation bounds
+		float simMinDim = static_cast<float>(std::min(n_x, n_y));
+		float imgMaxDim = static_cast<float>(std::max(imgWidth, imgHeight));
+
+		// Calculate the scaling factor to fit the image within the simulation bounds
+		float fitScale = simMinDim / imgMaxDim;
+
+		// Apply the regular scaling factor (local variable)
+		float totalScale = fitScale * scale;
+
+		// Adjusted image width and height after scaling
+		float scaledImgWidth = imgWidth * totalScale;
+		float scaledImgHeight = imgHeight * totalScale;
+
+		// Simulation grid dimensions
+		float simGridWidth = static_cast<float>(n_x);
+		float simGridHeight = static_cast<float>(n_y);
+
+		// Compute offsets to center the image in the simulation grid
+		float simOffsetX = (simGridWidth - scaledImgWidth) / 2.0f;
+		float simOffsetY = (simGridHeight - scaledImgHeight) / 2.0f;
+
+		for (size_t i = 1; i < n_x - 2; i++) {
+			for (size_t j = 1; j < n_y - 2; j++) {
+
+				// Compute the position relative to the image
+				float simX = static_cast<float>(i) + 0.5f;
+				float simY = static_cast<float>(j) + 0.5f;
+
+				// Adjust for offset to center the image
+				float imgXf = (simX - simOffsetX) / totalScale;
+				float imgYf = (simY - simOffsetY) / totalScale;
+
+				// Invert Y-axis if necessary (uncomment if required)
+				// imgYf = imgHeight - 1 - imgYf;
+
+				// Ensure we don't access out-of-bounds pixels
+				if (imgXf >= 0 && imgXf < imgWidth && imgYf >= 0 && imgYf < imgHeight) {
+
+					size_t imgX = static_cast<size_t>(imgXf);
+					size_t imgY = static_cast<size_t>(imgYf);
+
+					// Check pixel brightness threshold
+					if (modelImage.getPixel(imgX, imgY).r < 128) {
+						size_t idx = i * n_x + j;
+						fluidSim->sField[idx] = 0.0f;
+
+						fluidSim->mField[idx] = 1.0f;
+						fluidSim->uField[idx] = 0.0f;
+						fluidSim->uField[(i + 1) * n_x + j] = 0.0f;
+						fluidSim->vField[idx] = 0.0f;
+						fluidSim->vField[i * n_x + j + 1] = 0.0f;
+					}
+				}
+			}
+		}
+	}
+
+		
+		
+		
+		
+
+}
+	
+
+	
+
+void FluidSim::UpdateSField()
+{
+	//fill s field with 1 
+	std::fill(sField, sField + simParams.n_cells, 1.0f);
+
+
+
+	
+
+	
+	for (auto obstacle : simParams.obstacles)
+	{
+		obstacle.SetObstacleSField(this);
+	}
+	//anywhere that s is now 0, set u and v to 0
+	for (size_t i = 0; i < simParams.n_x; i++) {
+		for (size_t j = 0; j < simParams.n_y; j++) {
+			if (sField[i * simParams.n_x + j] == 0.0f) {
+				uField[i * simParams.n_x + j] = 0.0f;
+				vField[i * simParams.n_x + j] = 0.0f;
+			}
+		}
+	}
+
+
+	SetupWindTunnelBoundaries();
+	
+
 }
