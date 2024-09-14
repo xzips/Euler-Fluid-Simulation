@@ -1,4 +1,4 @@
-# Multithreaded Eulerian Fluid Simulation
+# Eulerian Fluid Simulation
 
 ## Overview
 This project implements an Eulerian fluid solver in C++, capable of simulating fluid flow around objects such as a circle or an airfoil. The solver discretizes the fluid domain using a grid-based approach, solving the Euler equations numerically to capture the fluid's motion.
