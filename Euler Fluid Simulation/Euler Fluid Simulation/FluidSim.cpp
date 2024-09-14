@@ -160,10 +160,7 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 				float s = sx0 + sx1 + sy0 + sy1;
 				if (s <= 1e-6)
 					continue;
-
-				//print s
-				//std::cerr << "s = " << s << std::endl;
-
+				
 				float div =
 					uField[(i + 1) * n + j]
 					- uField[i * n + j]
@@ -212,10 +209,7 @@ float FluidSim::SampleField(float x, float y, FieldType field) {
 	float h = simParams.gridSpacing;
 	float h1 = 1.0 / h;
 	float h2 = 0.5 * h;
-
-	//x = Math.max(Math.min(x, this.numX * h), h);
-	//y = Math.max(Math.min(y, this.numY * h), h);
-
+	
 	x = std::max(std::min(x, (float)simParams.n_x * h), h);
 	y = std::max(std::min(y, (float)simParams.n_y * h), h);
 
@@ -277,10 +271,6 @@ float FluidSim::avgV(size_t i, size_t j) {
 
 
 void FluidSim::AdvectVel(float dt) {
-
-	//this.newU.set(this.u);
-	//this.newV.set(this.v);
-
 	//memcpy
 	memcpy(newUField, uField, simParams.n_cells * sizeof(float));
 	memcpy(newVField, vField, simParams.n_cells * sizeof(float));
@@ -294,8 +284,7 @@ void FluidSim::AdvectVel(float dt) {
 
 	for (size_t i = 1; i < simParams.n_x; i++) {
 		for (size_t j = 1; j < simParams.n_y; j++) {
-
-			//cnt++;
+			
 
 			// u component
 			if (sField[i * n + j] != 0.0 && sField[(i - 1) * n + j] != 0.0 && j <simParams.n_y - 1) {
@@ -317,13 +306,12 @@ void FluidSim::AdvectVel(float dt) {
 				x = x - dt * u;
 				y = y - dt * v;
 				v = SampleField(x, y, FieldType::V_FIELD);
-				newVField[i * n + j] = v;
-			}
+			}				newVField[i * n + j] = v;
+
 		}
 	}
 
-	//this.u.set(this.newU);
-	//this.v.set(this.newV);
+
 
 	//memcpy
 	memcpy(uField, newUField, simParams.n_cells * sizeof(float));
@@ -337,7 +325,6 @@ void FluidSim::AdvectVel(float dt) {
 
 void FluidSim::AdvectSmoke(float dt) {
 
-	//this.newM.set(this.m);
 
 	//memcpy
 	memcpy(newMField, mField, simParams.n_cells * sizeof(float));
@@ -362,7 +349,6 @@ void FluidSim::AdvectSmoke(float dt) {
 			}
 		}
 	}
-	//this.m.set(this.newM);
 
 	//memcpy
 	memcpy(mField, newMField, simParams.n_cells * sizeof(float));
@@ -374,8 +360,7 @@ void FluidSim::AdvectSmoke(float dt) {
 void FluidSim::Simulate(float dt) {
 
 	//ApplyGravity(dt, simParams.gravity);
-
-	//this.p.fill(0.0);
+	
 	
 	for (size_t i = 0; i < simParams.n_cells; i++)
 	{

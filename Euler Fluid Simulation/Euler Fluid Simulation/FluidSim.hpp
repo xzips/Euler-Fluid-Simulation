@@ -10,25 +10,6 @@ enum class FieldType {
 };
 
 
-/*
-
-gravity : -9.81,
-		dt : 1.0 / 120.0,
-		numIters : 100,
-		frameNr : 0,
-		overRelaxation : 1.9,
-		obstacleX : 0.0,
-		obstacleY : 0.0,
-		obstacleRadius: 0.15,
-		paused: false,
-		sceneNr: 0,
-		showObstacle: false,
-		showStreamlines: false,
-		showVelocities: false,
-		showPressure: false,
-		showSmoke: true,
-		fluid: null
-*/
 
 
 class Obstacle
