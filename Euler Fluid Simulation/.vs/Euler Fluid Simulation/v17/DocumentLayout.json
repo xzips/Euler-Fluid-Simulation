@@ -21,7 +21,7 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 1030,
+          "DockedWidth": 817,
           "SelectedChildIndex": 1,
           "Children": [
             {
@@ -32,7 +32,7 @@
               "RelativeDocumentMoniker": "Euler Fluid Simulation\\FluidSim.hpp",
               "ToolTip": "C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation\\FluidSim.hpp",
               "RelativeToolTip": "Euler Fluid Simulation\\FluidSim.hpp",
-              "ViewState": "AQIAAB8AAAAAAAAAAAAAADEAAAAaAAAA",
+              "ViewState": "AQIAADYAAAAAAAAAAAAAADEAAAAaAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
               "WhenOpened": "2024-09-13T15:27:06.299Z",
               "EditorCaption": ""
@@ -45,7 +45,7 @@
               "RelativeDocumentMoniker": "Euler Fluid Simulation\\Euler Fluid Simulation.cpp",
               "ToolTip": "C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation.cpp",
               "RelativeToolTip": "Euler Fluid Simulation\\Euler Fluid Simulation.cpp",
-              "ViewState": "AQIAACoAAAAAAAAAAAAAAEIAAAAbAAAA",
+              "ViewState": "AQIAAF4AAAAAAAAAAIAzwH8AAAAAAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-09-13T15:16:03.255Z",
               "EditorCaption": ""
@@ -53,7 +53,7 @@
           ]
         },
         {
-          "DockedWidth": 732,
+          "DockedWidth": 945,
           "SelectedChildIndex": 0,
           "Children": [
             {
@@ -64,7 +64,7 @@
               "RelativeDocumentMoniker": "Euler Fluid Simulation\\FluidSim.cpp",
               "ToolTip": "C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Euler Fluid Simulation\\Euler Fluid Simulation\\FluidSim.cpp",
               "RelativeToolTip": "Euler Fluid Simulation\\FluidSim.cpp",
-              "ViewState": "AQIAAKcBAAAAAAAAAAAowM0BAAACAAAA",
+              "ViewState": "AQIAAAcAAAAAAAAAAAAMwC0AAAABAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-09-13T15:27:12.665Z",
               "EditorCaption": ""

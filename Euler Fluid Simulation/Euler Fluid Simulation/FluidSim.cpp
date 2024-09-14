@@ -130,8 +130,7 @@ void FluidSim::ApplyGravity(float dt, float gravity) {
 			}
 		}
 	}
-
-	CheckFieldsExploded();
+	
 }
 
 
@@ -146,8 +145,8 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 
 	for (size_t iteration = 0; iteration < numIterations; iteration++) {
 
-		for (size_t i = 1; i < simParams.n_x - 2; i++) {
-			for (size_t j = 1; j < simParams.n_y - 2; j++) {
+		for (size_t i = 1; i < simParams.n_x - 1; i++) {
+			for (size_t j = 1; j < simParams.n_y - 1; j++) {
 
 				//if the cell is a boundary cell
 				if (sField[i * n + j] == 0.0)
@@ -166,47 +165,17 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 				//std::cerr << "s = " << s << std::endl;
 
 				float div =
-					+ uField[(i + 1) * n + j]
+					uField[(i + 1) * n + j]
 					- uField[i * n + j]
 					+ vField[i * n + j + 1]
 					- vField[i * n + j];
 
-				if (std::abs(div) > 100)
-				{
-					//pritn current U field values
-
-					//print u field at the cell
-					std::cerr << "uField[" << i << "][" << j << "] = " << uField[i * n + j] << std::endl;
-					//print u field at the cell
-					std::cerr << "uField[" << i + 1 << "][" << j << "] = " << uField[(i + 1) * n + j] << std::endl;
-					//print u field at the cell
-					std::cerr << "uField[" << i << "][" << j + 1 << "] = " << uField[i * n + j + 1] << std::endl;
-					//print u field at the cell
-					std::cerr << "uField[" << i << "][" << j << "] = " << uField[i * n + j] << std::endl;
-
-					std::cout << "div = " << div << std::endl;
-				}
+		
 				
 				float p = -div / s;
 				p *= simParams.overRelaxation;
 
-				if (std::isnan(p) || std::isinf(p) ) //or (i == 29 and j == 35)
-				{
-					//print u field at the cell
-					std::cerr << "uField[" << i << "][" << j << "] = " << uField[i * n + j] << std::endl;
-					//print u field at the cell
-					std::cerr << "uField[" << i + 1 << "][" << j << "] = " << uField[(i + 1) * n + j] << std::endl;
-					//print u field at the cell
-					std::cerr << "uField[" << i << "][" << j + 1 << "] = " << uField[i * n + j + 1] << std::endl;
-					//print u field at the cell
-					std::cerr << "uField[" << i << "][" << j << "] = " << uField[i * n + j] << std::endl;
-
-
-					std::cerr << "Error: p is NaN or Inf!" << std::endl;
-					return;
-
-				}
-
+		
 
 				pField[i * n + j] += cp * p;
 
@@ -217,8 +186,7 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 			}
 		}
 	}
-
-	CheckFieldsExploded();
+	
 
 
 
@@ -235,8 +203,7 @@ void FluidSim::Extrapolate() {
 		vField[0 * n + j] = vField [1 * n + j];
 		vField[(simParams.n_x - 1) * n + j] = vField[(simParams.n_x - 2) * n + j];
 	}
-
-	CheckFieldsExploded();
+	
 }
 
 
@@ -321,7 +288,7 @@ void FluidSim::AdvectVel(float dt) {
 
 
 
-	size_t n = simParams.n_x;
+	size_t n = simParams.n_y;
 	float h = simParams.gridSpacing;
 	float h2 = 0.5 * h;
 
@@ -362,8 +329,7 @@ void FluidSim::AdvectVel(float dt) {
 	memcpy(uField, newUField, simParams.n_cells * sizeof(float));
 	memcpy(vField, newVField, simParams.n_cells * sizeof(float));
 
-
-	CheckFieldsExploded();
+	
 }
 
 
@@ -400,8 +366,7 @@ void FluidSim::AdvectSmoke(float dt) {
 
 	//memcpy
 	memcpy(mField, newMField, simParams.n_cells * sizeof(float));
-
-	CheckFieldsExploded();
+	
 
 }
 

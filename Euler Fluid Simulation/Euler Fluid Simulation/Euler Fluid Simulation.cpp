@@ -17,7 +17,7 @@ int main()
 	sf::RenderWindow window(sf::VideoMode(800, 800), "Euler Fluid Simulation");
 
 	//framerate limit to 60
-	window.setFramerateLimit(30);
+	window.setFramerateLimit(600);
 
 	//create RenderTexture
 	sf::RenderTexture renderTexture;
@@ -26,6 +26,40 @@ int main()
 
 
 	//fluidSim.SetObstacle(16, 16, 10);
+
+
+
+	float inVel = 2;
+
+	for (size_t i = 0; i < simParams.n_x; i++) {
+		for (size_t j = 0; j < simParams.n_y; j++) {
+			float s = 1.0;	// fluid
+			if (i == 0 || j == 0 || j == simParams.n_y - 1)
+				s = 0.0;	// solid
+			fluidSim.sField[i * simParams.n_y + j] = s;
+
+			if (i == 1) {
+				fluidSim.uField[i * simParams.n_y + j] = inVel;
+			}
+		}
+	}
+
+
+
+	fluidSim.SetObstacle(0.35, 0.5, 0.10);
+
+
+
+
+	float pipeH = 0.07 * simParams.n_y;
+	size_t minJ = std::floor(0.5 * simParams.n_y - 0.5 * pipeH);
+	size_t maxJ = std::floor(0.5 * simParams.n_y + 0.5 * pipeH);
+
+
+
+	for (size_t j = minJ; j < maxJ; j++)
+		fluidSim.mField[2 * simParams.n_y + j] = 0.0;
+
 
 	
 	
@@ -60,37 +94,6 @@ int main()
 
 
 
-		float inVel = 2;
-		
-		for (size_t i = 0; i < simParams.n_x; i++) {
-			for (size_t j = 0; j < simParams.n_y; j++) {
-				float s = 1.0;	// fluid
-				if (i == 0 || j == 0 || j == simParams.n_y - 1)
-					s = 0.0;	// solid
-				fluidSim.sField[i * simParams.n_y + j] = s;
-
-				if (i == 1) {
-					fluidSim.uField[i * simParams.n_y + j] = inVel;
-				}
-			}
-		}
-
-
-
-		fluidSim.SetObstacle(0.35, 0.5, 0.2);
-
-
-
-
-		float pipeH = 0.1 * simParams.n_y;
-		size_t minJ = std::floor(0.5 * simParams.n_y - 0.5 * pipeH);
-		size_t maxJ = std::floor(0.5 * simParams.n_y + 0.5 * pipeH);
-
-		for (size_t j = minJ; j < maxJ; j++)
-			fluidSim.mField[2 * simParams.n_y + j] = 0.0;
-
-
-
 
 
 
@@ -100,7 +103,7 @@ int main()
 		float max_P = -INFINITY;
 
 		//find min and max
-		for (size_t i = 1; i < simParams.n_x; i++)
+		for (size_t i = 10; i < simParams.n_x; i++)
 		{
 			for (size_t j = 1; j < simParams.n_y; j++)
 			{
@@ -111,7 +114,7 @@ int main()
 			}
 		}
 
-		std::cout << "min P: " << min_P << " max P: " << max_P << std::endl;
+		//std::cout << "min P: " << min_P << " max P: " << max_P << std::endl;
 
 		//sample V field and draw it
 		for (size_t i = 0; i < simParams.n_x; i++)
@@ -154,7 +157,7 @@ int main()
 	
 
 		//simulate the fluid
-		fluidSim.Simulate(0.01f);
+		fluidSim.Simulate(0.005f);
 
 
 
