@@ -19,9 +19,11 @@ The solver successfully simulates fluid flow in various setups, such as a wind t
 ## Current Next Steps
 - ✅Clean-up code in main function, make everything more modular
 - ✅Allow importing of arbitrary boundary models (like from a PNG image)
-- Basic optimizations (limiting memcpy, optimzing loops, etc)
+- ✅Basic optimizations (limiting memcpy, optimzing loops, etc)
+- ✅Medium-level optimization (utilizing STL paralelization)
+- High-level optimization - improve the algorithm approach itself
 - Add more visualizations (streamlines, pressure, vorticity, velocity)
-- Deeper optimzation (utilizing AVX512 instructions for parellelization, and finally multithread everything)
+- Add dynamically moving obstacles
 
 ### Resources Used
 - https://en.wikipedia.org/wiki/Euler_equations_(fluid_dynamics)
