@@ -143,7 +143,10 @@ void FluidSim::Render(sf::RenderWindow& window)
 
 
 				if (sField[mapped_i * simParams.n_y + mapped_j] == 0)
-					color = sf::Color(28, 91, 152, 255);
+				{
+					//color = sf::Color(28, 91, 152, 255);
+
+				}
 
 
 				image.setPixel(i, j, color);
@@ -159,80 +162,19 @@ void FluidSim::Render(sf::RenderWindow& window)
 
 	//draw sprite
 	window.draw(sprite);
+
+	//for obstacles DrawObstaclePretty
+	for (auto& obs : simParams.obstacles)
+	{
+		obs.DrawObstaclePretty(window);
+	}
+
 	
 
 
 	
 }
 
-
-bool FluidSim::CheckFieldsExploded()
-{
-	std::string exploded_field;
-
-	//if any of the fields contain NaN or Inf or -Inf etc print an error message and return true
-	for (size_t i = 0; i < simParams.n_cells; i++)
-	{
-		if (std::isnan(uField[i]) || std::isinf(uField[i]))
-		{
-			exploded_field = "uField";
-			break;
-		}
-
-		if (std::isnan(vField[i]) || std::isinf(vField[i]))
-		{
-			exploded_field = "vField";
-			break;
-		}
-
-		if (std::isnan(sField[i]) || std::isinf(sField[i]))
-		{
-			exploded_field = "sField";
-			break;
-		}
-
-		if (std::isnan(newUField[i]) || std::isinf(newUField[i]))
-		{
-			exploded_field = "newUField";
-			break;
-		}
-
-		if (std::isnan(newVField[i]) || std::isinf(newVField[i]))
-		{
-			exploded_field = "newVField";
-			break;
-		}
-
-		if (std::isnan(pField[i]) || std::isinf(pField[i]))
-		{
-			exploded_field = "pField";
-			break;
-		}
-
-		if (std::isnan(mField[i]) || std::isinf(mField[i]))
-		{
-			exploded_field = "mField";
-			break;
-		}
-
-		if (std::isnan(newMField[i]) || std::isinf(newMField[i]))
-		{
-			exploded_field = "newMField";
-			break;
-		}
-
-
-	}
-
-	if (exploded_field != "")
-	{
-		std::cerr << "Error: " << exploded_field << " exploded!" << std::endl;
-		return true;
-	}
-
-	return false;
-
-}
 
 
 void FluidSim::ApplyGravity(float dt, float gravity) {
@@ -253,17 +195,10 @@ void FluidSim::ApplyGravity(float dt, float gravity) {
 }
 
 
-/*
-If there is too much inflow to a cell, we need to redistribute
-the inflow velocity equally to the neighboring cells.
-*/
-
-
-
 void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 {
 	size_t n = simParams.n_y;
-	float cp = simParams.density * simParams.gridSpacing / dt;
+	float cp = simParams.density * simParams.gridSpacingX / dt;
 
 	for (size_t iteration = 0; iteration < numIterations; iteration++) {
 
@@ -310,7 +245,7 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 
 
 void FluidSim::Extrapolate() {
-	size_t n = simParams.n_x;
+	size_t n = simParams.n_y;
 	for (size_t i = 0; i < simParams.n_x; i++) {
 		uField[i * n + 0] = uField[i * n + 1];
 		uField[i * n + simParams.n_y - 1] = uField[i * n + simParams.n_y - 2];
@@ -325,7 +260,7 @@ void FluidSim::Extrapolate() {
 
 float FluidSim::SampleField(float x, float y, FieldType field) {
 	size_t n = simParams.n_y;
-	float h = simParams.gridSpacing;
+	float h = simParams.gridSpacingX;
 	float h1 = 1.0 / h;
 	float h2 = 0.5 * h;
 	
@@ -374,7 +309,7 @@ float FluidSim::SampleField(float x, float y, FieldType field) {
 
 
 float FluidSim::avgU(size_t i, size_t j) {
-	size_t n = simParams.n_x;
+	size_t n = simParams.n_y;
 	float u = (uField[i * n + j - 1] + uField[i * n + j] +
 		uField[(i + 1) * n + j - 1] + uField[(i + 1) * n + j]) * 0.25;
 	return u;
@@ -382,7 +317,7 @@ float FluidSim::avgU(size_t i, size_t j) {
 }
 
 float FluidSim::avgV(size_t i, size_t j) {
-	size_t n = simParams.n_x;
+	size_t n = simParams.n_y;
 	float v = (vField[(i - 1) * n + j] + vField[i * n + j] +
 		vField[(i - 1) * n + j + 1] + vField[i * n + j + 1]) * 0.25;
 	return v;
@@ -398,7 +333,7 @@ void FluidSim::AdvectVel(float dt) {
 
 
 	size_t n = simParams.n_y;
-	float h = simParams.gridSpacing;
+	float h = simParams.gridSpacingX;
 	float h2 = 0.5 * h;
 
 	for (size_t i = 1; i < simParams.n_x; i++) {
@@ -452,7 +387,7 @@ void FluidSim::AdvectSmoke(float dt) {
 
 
 	size_t n = simParams.n_y;
-	float h = simParams.gridSpacing;
+	float h = simParams.gridSpacingX;
 	float h2 = 0.5 * h;
 
 	for (size_t i = 1; i < simParams.n_x - 1; i++) {
@@ -545,16 +480,16 @@ void FluidSim::SetObstacle(float x, float y, float r) {
 	
 
 	
-	size_t n = simParams.n_x;
-	float cd = sqrt(2) * simParams.gridSpacing;
+	size_t n = simParams.n_y;
+	float cd = sqrt(2) * simParams.gridSpacingX;
 
 	for (size_t i = 1; i < simParams.n_x - 2; i++) {
 		for (size_t j = 1; j < simParams.n_y - 2; j++) {
 
 			//sField[i * n + j] = 1.0;
 
-			float dx = (i + 0.5) * simParams.gridSpacing - x;
-			float dy = (j + 0.5) * simParams.gridSpacing - y;
+			float dx = (i + 0.5) * simParams.gridSpacingX - x;
+			float dy = (j + 0.5) * simParams.gridSpacingY - y;
 
 			if (dx * dx + dy * dy < r * r) {
 				sField[i * n + j] = 0.0;
@@ -582,16 +517,16 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 		float vx = 0.0;
 		float vy = 0.0;
 
-		size_t n = fluidSim->simParams.n_x;
-		float cd = sqrt(2) * fluidSim->simParams.gridSpacing;
+		size_t n = fluidSim->simParams.n_y;
+		float cd = sqrt(2) * fluidSim->simParams.gridSpacingX;
 
 		for (size_t i = 1; i < fluidSim->simParams.n_x - 2; i++) {
 			for (size_t j = 1; j < fluidSim->simParams.n_y - 2; j++) {
 
 				//sField[i * n + j] = 1.0;
 
-				float dx = (i + 0.5) * fluidSim->simParams.gridSpacing - x;
-				float dy = (j + 0.5) * fluidSim->simParams.gridSpacing - y;
+				float dx = (i + 0.5) * fluidSim->simParams.gridSpacingY - x;
+				float dy = (j + 0.5) * fluidSim->simParams.gridSpacingY - y;
 
 				if (dx * dx + dy * dy < radius * radius) {
 					fluidSim->sField[i * n + j] = 0.0;
@@ -614,16 +549,16 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 		float vx = 0.0;
 		float vy = 0.0;
 
-		size_t n = fluidSim->simParams.n_x;
-		float cd = sqrt(2) * fluidSim->simParams.gridSpacing;
+		size_t n = fluidSim->simParams.n_y;
+		float cd = sqrt(2) * fluidSim->simParams.gridSpacingX;
 
 		for (size_t i = 1; i < fluidSim->simParams.n_x - 2; i++) {
 			for (size_t j = 1; j < fluidSim->simParams.n_y - 2; j++) {
 
 				//sField[i * n + j] = 1.0;
 
-				float dx = (i + 0.5) * fluidSim->simParams.gridSpacing - x;
-				float dy = (j + 0.5) * fluidSim->simParams.gridSpacing - y;
+				float dx = (i + 0.5) * fluidSim->simParams.gridSpacingY - x;
+				float dy = (j + 0.5) * fluidSim->simParams.gridSpacingY - y;
 
 				if (dx > -width / 2 && dx < width / 2 && dy > -height / 2 && dy < height / 2) {
 					fluidSim->sField[i * n + j] = 0.0;
@@ -672,9 +607,13 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 		float simGridWidth = static_cast<float>(n_x);
 		float simGridHeight = static_cast<float>(n_y);
 
-		// Compute offsets to center the image in the simulation grid
-		float simOffsetX = (simGridWidth - scaledImgWidth) / 2.0f;
-		float simOffsetY = (simGridHeight - scaledImgHeight) / 2.0f;
+		float xposInGrid = x * simGridWidth / ((float)n_x / (float)n_y);
+		float yposInGrid = y * simGridHeight;
+
+		// Compute offsets to center the image in "x" and "y" local variables
+		float simOffsetX = xposInGrid - scaledImgWidth / 2;
+		float simOffsetY = yposInGrid - scaledImgHeight / 2;
+
 
 		for (size_t i = 1; i < n_x - 2; i++) {
 			for (size_t j = 1; j < n_y - 2; j++) {
@@ -686,9 +625,7 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 				// Adjust for offset to center the image
 				float imgXf = (simX - simOffsetX) / totalScale;
 				float imgYf = (simY - simOffsetY) / totalScale;
-
-				// Invert Y-axis if necessary (uncomment if required)
-				// imgYf = imgHeight - 1 - imgYf;
+				
 
 				// Ensure we don't access out-of-bounds pixels
 				if (imgXf >= 0 && imgXf < imgWidth && imgYf >= 0 && imgYf < imgHeight) {
@@ -696,25 +633,22 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 					size_t imgX = static_cast<size_t>(imgXf);
 					size_t imgY = static_cast<size_t>(imgYf);
 
-					// Check pixel brightness threshold
-					if (modelImage.getPixel(imgX, imgY).r < 128) {
-						size_t idx = i * n_x + j;
+					// Check pixel brightness threshold, alpha must be > 128
+					if (modelImage.getPixel(imgX, imgY).a > 128) {
+						size_t idx = i * n_y + j;
 						fluidSim->sField[idx] = 0.0f;
 
 						fluidSim->mField[idx] = 1.0f;
 						fluidSim->uField[idx] = 0.0f;
-						fluidSim->uField[(i + 1) * n_x + j] = 0.0f;
+						fluidSim->uField[(i + 1) * n_y + j] = 0.0f;
 						fluidSim->vField[idx] = 0.0f;
-						fluidSim->vField[i * n_x + j + 1] = 0.0f;
+						fluidSim->vField[i * n_y + j + 1] = 0.0f;
 					}
 				}
 			}
 		}
 	}
 
-		
-		
-		
 		
 
 }
@@ -739,9 +673,9 @@ void FluidSim::UpdateSField()
 	//anywhere that s is now 0, set u and v to 0
 	for (size_t i = 0; i < simParams.n_x; i++) {
 		for (size_t j = 0; j < simParams.n_y; j++) {
-			if (sField[i * simParams.n_x + j] == 0.0f) {
-				uField[i * simParams.n_x + j] = 0.0f;
-				vField[i * simParams.n_x + j] = 0.0f;
+			if (sField[i * simParams.n_y + j] == 0.0f) {
+				uField[i * simParams.n_y + j] = 0.0f;
+				vField[i * simParams.n_y + j] = 0.0f;
 			}
 		}
 	}
@@ -750,4 +684,112 @@ void FluidSim::UpdateSField()
 	SetupWindTunnelBoundaries();
 	
 
+}
+
+
+
+
+
+
+
+
+
+void Obstacle::DrawObstaclePretty(sf::RenderWindow& window)
+{
+
+
+	// Get the window size
+	sf::Vector2u windowSize = window.getSize();
+	float windowWidth = static_cast<float>(windowSize.x);
+	float windowHeight = static_cast<float>(windowSize.y);
+
+	float domainHeight = 1.0f;
+	float domainWidth = (float)windowWidth / (float)windowHeight;;
+
+
+	// Compute scaling factors to map simulation units to window pixels
+	float scaleX = windowWidth / domainWidth;
+	float scaleY = windowHeight / domainHeight;
+
+	if (type == ObstacleType::SQUARE)
+	{
+		// Convert size to window units
+		float rectWidth = width * scaleX;
+		float rectHeight = height * scaleY;
+
+		// Position rectangle centered at (x, y)
+		float rectX = x * scaleX - rectWidth / 2.0f;
+		float rectY = y * scaleY - rectHeight / 2.0f;
+
+		sf::RectangleShape rectangle(sf::Vector2f(rectWidth, rectHeight));
+		rectangle.setPosition(rectX, rectY);
+
+		// Set appearance
+		rectangle.setFillColor(sf::Color(63, 72, 204)); // Example color
+		rectangle.setOutlineColor(sf::Color::White);
+		rectangle.setOutlineThickness(1.0f);
+
+		window.draw(rectangle);
+	}
+	else if (type == ObstacleType::CIRCLE)
+	{
+		// Convert radius to window units
+		float circleRadiusX = radius * scaleX;
+		float circleRadiusY = radius * scaleY;
+		// Use average radius for uniform scaling
+		float circleRadius = (circleRadiusX + circleRadiusY) / 2.0f;
+
+		// Position circle centered at (x, y)
+		float circleX = x * scaleX - circleRadius;
+		float circleY = y * scaleY - circleRadius;
+
+		sf::CircleShape circle(circleRadius);
+		circle.setPosition(circleX, circleY);
+
+		// Set appearance
+		circle.setFillColor(sf::Color(63, 72, 204)); // Example color
+		circle.setOutlineColor(sf::Color::White);
+		circle.setOutlineThickness(1.0f);
+
+		window.draw(circle);
+	}
+	else if (type == ObstacleType::IMAGE)
+	{
+		modelTexture.loadFromImage(modelImage);
+		sprite.setTexture(modelTexture);
+
+		// Get image dimensions
+		float imgWidth = static_cast<float>(modelImage.getSize().x);
+		float imgHeight = static_cast<float>(modelImage.getSize().y);
+
+		// Image aspect ratio
+		float imgAspectRatio = imgWidth / imgHeight;
+
+		// Desired width and height in simulation units
+		// Assume 'scale' represents the desired width in simulation units
+		float desiredWidthSim = scale;
+		float desiredHeightSim = desiredWidthSim / imgAspectRatio;
+
+		// Desired width and height in window units
+		float desiredWidthWin = desiredWidthSim * scaleX;
+		float desiredHeightWin = desiredHeightSim * scaleY;
+
+		// Scaling factors for the sprite
+		float spriteScaleX = desiredWidthWin / imgWidth;
+		float spriteScaleY = desiredHeightWin / imgHeight;
+
+		sprite.setScale(spriteScaleX, spriteScaleY);
+
+		// Set the origin to the center of the sprite
+		sprite.setOrigin(imgWidth / 2.0f, imgHeight / 2.0f);
+
+		// Position the sprite
+		float spriteX = x * scaleX;
+		float spriteY = y * scaleY;
+		sprite.setPosition(spriteX, spriteY);
+
+		window.draw(sprite);
+	}
+	
+	
 }

@@ -14,13 +14,16 @@ int main()
 	SimParameters simParams;
 	DisplayParameters displayParams;
 
-	displayParams.windowWidth = 800;
-	displayParams.windowHeight = 800;
+	size_t fixedHeight = 800;
+	simParams.SetGridSize(250, 120);
+
+
+	displayParams.windowWidth = fixedHeight * (float)simParams.n_x / (float)simParams.n_y;;
+	displayParams.windowHeight = fixedHeight;
 	displayParams.maxFps = 600;
 
-	simParams.windTunnelSpeed = 4.f;
+	simParams.windTunnelSpeed = 2.f;
 	
-	simParams.SetGridSize(250, 250);
 	simParams.overRelaxation = 1.9;
 	
 	sf::RenderWindow window(sf::VideoMode(displayParams.windowWidth, displayParams.windowHeight), "Euler Fluid Simulation");
@@ -33,31 +36,24 @@ int main()
 
 	
 	
-	Obstacle circle = Obstacle(0.25, 0.5, 0.08);
-	//Obstacle rect = Obstacle(0.25, 0.48, 0.1, 0.1);
+	//Obstacle obs = Obstacle(0.4, 0.5, 0.08);
+	Obstacle obs = Obstacle(0.30, 0.48, 0.13, 0.13);
 
-	fluidSim.simParams.obstacles.push_back(circle);
+	fluidSim.simParams.obstacles.push_back(obs);
 	fluidSim.UpdateSField();
 
+
+
+
+
+
 	
 
-
-	/*
-	fluidSim.AddDyeSource(0.05, 0.62, 0.02, 0.01, 0);
-	fluidSim.AddDyeSource(0.05, 0.58, 0.02, 0.01, 0);
-	
-	fluidSim.AddDyeSource(0.05, 0.54, 0.02, 0.01, 0);
-	fluidSim.AddDyeSource(0.05, 0.50, 0.02, 0.01, 0);
-	fluidSim.AddDyeSource(0.05, 0.46, 0.02, 0.01, 0);
-
-	fluidSim.AddDyeSource(0.05, 0.42, 0.02, 0.01, 0);
-	fluidSim.AddDyeSource(0.05, 0.38, 0.02, 0.01, 0);
-	*/
-
+	float dyeLineSpacing = 1.f / (float)simParams.n_y;
 	//add dye sources every 0.04
-	for (size_t i = 10; i < simParams.n_x - 10; i++) {
+	for (size_t i = 0; i < simParams.n_y; i++) {
 		if (i % 10 == 0) {
-			fluidSim.AddDyeSource(0.05, 0.05 + i * 0.005, 0.02, 0.001, 0);
+			fluidSim.AddDyeSource(0.05, 0.05 + i * dyeLineSpacing, 0.02, 0.001, 0);
 		}
 	}
 
@@ -73,9 +69,9 @@ int main()
 
 	sf::Text text;
 	text.setFont(font);
-	text.setCharacterSize(24);
+	text.setCharacterSize(18);
 	text.setFillColor(sf::Color::White);
-	text.setPosition(10, 10);
+	text.setPosition(5, 5);
 
 	sf::Vector2f loadModelButtonPosition(displayParams.windowWidth - 100, 50);
 
@@ -111,7 +107,7 @@ int main()
 	resetText.setFont(font);
 	resetText.setCharacterSize(24);
 	resetText.setFillColor(sf::Color::White);
-	resetText.setString("Reset");
+	resetText.setString("Reset Dye");
 	//center the text
 	resetText.setOrigin(resetText.getLocalBounds().width / 2, resetText.getLocalBounds().height / 2 + 5);
 	resetText.setPosition(resetButtonPosition.x, resetButtonPosition.y);
@@ -190,7 +186,7 @@ int main()
 
 				//check if img is valid
 				if (img.getSize().x > 0) {
-					Obstacle obs(img, 0.25, 0.5, 0.7);
+					Obstacle obs(img, 0.7, 0.5, 0.7);
 					
 					fluidSim.simParams.obstacles.clear();
 					fluidSim.simParams.obstacles.push_back(obs);
@@ -221,7 +217,10 @@ int main()
 
 			//if clicked, reset the simulation
 			if (leftMouseClickedThisFrame) {
-				fluidSim.Reset();
+				//fluidSim.Reset();
+
+				std::fill(fluidSim.mField, fluidSim.mField + simParams.n_cells, 1.0f);
+
 				//fluidSim.SetupWindTunnelBoundaries(4);
 
 				fluidSim.UpdateSField();

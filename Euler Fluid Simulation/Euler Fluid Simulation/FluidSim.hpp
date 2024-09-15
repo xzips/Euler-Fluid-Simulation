@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include "SFML/Graphics.hpp"
 #include <vector>
@@ -42,6 +44,11 @@ public:
 		this->modelImage = image;
 		this->type = ObstacleType::IMAGE;
 		this->scale = scale;
+		this->x = x;
+		this->y = y;
+
+		modelTexture.loadFromImage(modelImage);
+		sprite.setTexture(modelTexture);
 	}
 
 	Obstacle() {}
@@ -65,6 +72,9 @@ public:
 	void CreateFromImage(sf::Image image, float x, float y, float scale) {
 		this->modelImage = image;
 		this->type = ObstacleType::IMAGE;
+		
+		modelTexture.loadFromImage(modelImage);
+		sprite.setTexture(modelTexture);
 
 	}
 	
@@ -77,9 +87,12 @@ public:
 	float scale = 1;
 	ObstacleType type = ObstacleType::CIRCLE;
 	sf::Image modelImage;
+	sf::Texture modelTexture;
+	sf::Sprite sprite;
 
 	void SetObstacleSField(FluidSim* fluidSim);
 
+	void DrawObstaclePretty(sf::RenderWindow& window);
 	
 
 	
@@ -109,11 +122,15 @@ class SimParameters
 {
 public:
 	float density = 1000.f;
-	size_t n_x = 200 + 2;
+	size_t n_x = 300 + 2;
 	size_t n_y = 200 + 2;
 	size_t n_cells = n_x * n_y;
 	
-	float gridSpacing = 1.f / (float)n_x;
+	float gridSpacingX = 1.f / (float)n_x;
+	float gridSpacingY = 1.f / (float)n_y;
+
+	float domainHeight = 1.f;
+	float domainWidth = (float)n_x / (float)n_y;
 	
 	float gravity = 0.f;
 	size_t numIterations = 100;
@@ -133,7 +150,8 @@ public:
 		this->n_x = n_x + 2;
 		this->n_y = n_y + 2;
 		this->n_cells = this->n_x * this->n_y;
-		this->gridSpacing = 1.f / (float)n_x;
+		this->gridSpacingX = 1.f / (float)n_x;
+		this->gridSpacingY = 1.f / (float)n_y;
 	}
 
 };
