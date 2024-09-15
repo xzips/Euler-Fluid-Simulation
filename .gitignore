@@ -18,4 +18,7 @@ bld/
 [Ll]ogs/
 *.vsidx
 Euler Fluid Simulation/.vs/Euler Fluid Simulation/v17/Browse.VC.opendb
-*.png
+*.db-shm
+*.db-wal
+*.db
+/Images
