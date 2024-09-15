@@ -34,3 +34,4 @@ The solver successfully simulates fluid flow in various setups, such as a wind t
 ### Resources for Optimization
 - https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf
 - https://www.wias-berlin.de/people/john/LEHRE/MULTIGRID/multigrid.pdf
+- https://math.mit.edu/classes/18.086/2006/am63.pdf
