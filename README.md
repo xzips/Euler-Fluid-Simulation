@@ -25,8 +25,12 @@ The solver successfully simulates fluid flow in various setups, such as a wind t
 - Add more visualizations (streamlines, pressure, vorticity, velocity)
 - Add dynamically moving obstacles
 
-### Resources Used
+### Resources for Initial Implementation
 - https://en.wikipedia.org/wiki/Euler_equations_(fluid_dynamics)
 - https://matthias-research.github.io/pages/tenMinutePhysics/17-fluidSim.pdf
 - https://quangduong.me/notes/eulerian_fluid_sim_p1/
 - https://mikeash.com/pyblog/fluid-simulation-for-dummies.html
+
+### Resources for Optimization
+- https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf
+- https://www.wias-berlin.de/people/john/LEHRE/MULTIGRID/multigrid.pdf
