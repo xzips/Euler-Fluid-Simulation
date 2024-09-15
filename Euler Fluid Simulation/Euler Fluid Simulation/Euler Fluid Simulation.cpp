@@ -6,7 +6,7 @@
 #include <windows.h>
 #include <string>
 #include "ModelLoading.hpp"
-
+#include <chrono>
 
 
 int main()
@@ -14,13 +14,14 @@ int main()
 	SimParameters simParams;
 	DisplayParameters displayParams;
 
-	size_t fixedHeight = 800;
-	simParams.SetGridSize(250, 120);
+	size_t fixedHeight = 1200;
+	simParams.SetGridSize(1000, 500);
+	simParams.numIterations = 250;
 
 
 	displayParams.windowWidth = fixedHeight * (float)simParams.n_x / (float)simParams.n_y;;
 	displayParams.windowHeight = fixedHeight;
-	displayParams.maxFps = 600;
+	displayParams.maxFps = 60;
 
 	simParams.windTunnelSpeed = 2.f;
 	
@@ -53,7 +54,7 @@ int main()
 	//add dye sources every 0.04
 	for (size_t i = 0; i < simParams.n_y; i++) {
 		if (i % 10 == 0) {
-			fluidSim.AddDyeSource(0.05, 0.05 + i * dyeLineSpacing, 0.02, 0.001, 0);
+			fluidSim.AddDyeSource(0.01, 0.05 + i * dyeLineSpacing, 0.02, 0.001, 0);
 		}
 	}
 
@@ -72,6 +73,12 @@ int main()
 	text.setCharacterSize(18);
 	text.setFillColor(sf::Color::White);
 	text.setPosition(5, 5);
+
+	sf::Text text2;
+	text2.setFont(font);
+	text2.setCharacterSize(18);
+	text2.setFillColor(sf::Color::White);
+	text2.setPosition(320, 5);
 
 	sf::Vector2f loadModelButtonPosition(displayParams.windowWidth - 100, 50);
 
@@ -118,7 +125,9 @@ int main()
 
 
 
-	sf::Clock clock;
+	sf::Clock frameClock;
+	sf::Clock simClock;
+	sf::Clock renderClock;
 	float lastTime = 0;
 
 	while (window.isOpen())
@@ -147,8 +156,8 @@ int main()
 
 
 		
-		float currentTime = clock.getElapsedTime().asSeconds();
-		clock.restart();
+		float currentTime = frameClock.restart().asSeconds();
+		
 		float fps = 1.f / (currentTime);
 		lastTime = currentTime;
 		
@@ -157,14 +166,24 @@ int main()
 	
 		
 		
+				
+		simClock.restart();
 		
-	
 		fluidSim.Simulate(0.005f);
+		float simTime = simClock.restart().asMicroseconds();
 
+	
+		renderClock.restart();
 		fluidSim.Render(window);
+		float renderTime = renderClock.restart().asMicroseconds();
 
+		
+		
+		//set text
+		text2.setString("Fluid Sim Time: " + std::to_string(simTime/1000.f) + "ms, Fluid Render Time: " + std::to_string(renderTime/1000.f) + "ms" + ", Frame Time: " + std::to_string(currentTime*1000) + "ms");
 		
 		window.draw(text);
+		window.draw(text2);
 
 
 		//draw the load model button

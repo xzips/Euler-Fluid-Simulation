@@ -133,7 +133,7 @@ public:
 	float domainWidth = (float)n_x / (float)n_y;
 	
 	float gravity = 0.f;
-	size_t numIterations = 100;
+	size_t numIterations = 60;
 	float overRelaxation = 1.9;
 
 	float windTunnelSpeed = 0.f;
@@ -152,6 +152,7 @@ public:
 		this->n_cells = this->n_x * this->n_y;
 		this->gridSpacingX = 1.f / (float)n_x;
 		this->gridSpacingY = 1.f / (float)n_y;
+
 	}
 
 };
