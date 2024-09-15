@@ -15,8 +15,8 @@ int main()
 	DisplayParameters displayParams;
 
 	size_t fixedHeight = 1200;
-	simParams.SetGridSize(1000, 500);
-	simParams.numIterations = 250;
+	simParams.SetGridSize(600, 400);
+	simParams.numIterations = 100;
 
 
 	displayParams.windowWidth = fixedHeight * (float)simParams.n_x / (float)simParams.n_y;;
@@ -30,6 +30,7 @@ int main()
 	sf::RenderWindow window(sf::VideoMode(displayParams.windowWidth, displayParams.windowHeight), "Euler Fluid Simulation");
 	window.setFramerateLimit(displayParams.maxFps);
 	
+	debugDrawWindow = &window;
 
 	FluidSim fluidSim = FluidSim(simParams, displayParams);
 
@@ -68,6 +69,8 @@ int main()
 		std::cout << "Error loading font" << std::endl;
 	}
 
+	debugDrawFont.loadFromFile("C:\\Users\\aspen\\Desktop\\SFMLFonts\\Helvetica.ttf");
+
 	sf::Text text;
 	text.setFont(font);
 	text.setCharacterSize(18);
@@ -79,6 +82,14 @@ int main()
 	text2.setCharacterSize(18);
 	text2.setFillColor(sf::Color::White);
 	text2.setPosition(320, 5);
+
+
+	sf::Text text3;
+	text3.setFont(font);
+	text3.setCharacterSize(22);
+	text3.setFillColor(sf::Color::White);
+	text3.setPosition(1200, 5);
+	
 
 	sf::Vector2f loadModelButtonPosition(displayParams.windowWidth - 100, 50);
 
@@ -182,8 +193,12 @@ int main()
 		//set text
 		text2.setString("Fluid Sim Time: " + std::to_string(simTime/1000.f) + "ms, Fluid Render Time: " + std::to_string(renderTime/1000.f) + "ms" + ", Frame Time: " + std::to_string(currentTime*1000) + "ms");
 		
+		//fluidSim.simStats.maxVelocityFieldDivergence
+		text3.setString("Avg Divergence: " + std::to_string(fluidSim.simStats.avgVelocityFieldDivergence) + ", Max Divergence: " + std::to_string(fluidSim.simStats.maxVelocityFieldDivergence));
+
 		window.draw(text);
 		window.draw(text2);
+		window.draw(text3);
 
 
 		//draw the load model button

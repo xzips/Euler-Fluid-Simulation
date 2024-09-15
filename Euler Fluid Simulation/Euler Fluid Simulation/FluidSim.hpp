@@ -4,6 +4,11 @@
 #include "SFML/Graphics.hpp"
 #include <vector>
 
+
+
+extern sf::RenderWindow* debugDrawWindow;
+extern sf::Font debugDrawFont;
+
 enum class FieldType {
 	U_FIELD,
 	V_FIELD,
@@ -21,6 +26,9 @@ enum class ObstacleType {
 
 
 class FluidSim;
+
+
+
 
 class Obstacle
 {
@@ -98,6 +106,14 @@ public:
 	
 };
 
+
+class SimStatistics
+{
+public:
+	float maxVelocityFieldDivergence;
+	float avgVelocityFieldDivergence;
+
+};
 
 class RectangularDyeSource
 {
@@ -196,8 +212,7 @@ public:
 	void UpdateSField();
 
 	void Simulate(float dt);
-
-	bool CheckFieldsExploded();
+	
 
 	void Reset();
 
@@ -214,6 +229,7 @@ public:
 	
 	SimParameters simParams;
 	DisplayParameters displayParams;
+	SimStatistics simStats;
 
 	sf::Image image;
 	sf::Texture texture;
@@ -235,6 +251,14 @@ public:
 
 	float * mField;
 	float * newMField;
+
+
+	//for optimizations in solve incompressibility function 
+	float* sWeightTemp;
+	float* sx0Field;
+	float* sx1Field;
+	float* sy0Field;
+	float* sy1Field;
 
 
 

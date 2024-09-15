@@ -3,13 +3,19 @@
 #include <string>
 
 #include <iostream>
-#include <immintrin.h>
+
+
+
 #include <execution>
 #include <vector>
 
-#include <omp.h>
 
+#ifdef _OPENMP
+	#include <omp.h>  // Include OpenMP header only if OpenMP is enabled
+#endif
 
+sf::RenderWindow* debugDrawWindow;
+sf::Font debugDrawFont;
 FluidSim::FluidSim(SimParameters simParams, DisplayParameters displayParams)
 {
 
@@ -30,6 +36,13 @@ FluidSim::FluidSim(SimParameters simParams, DisplayParameters displayParams)
 
 	mField = new float[simParams.n_cells];
 	newMField = new float[simParams.n_cells];
+
+	sWeightTemp = new float[simParams.n_cells];
+	sx0Field = new float[simParams.n_cells];
+	sx1Field = new float[simParams.n_cells];
+	sy0Field = new float[simParams.n_cells];
+	sy1Field = new float[simParams.n_cells];
+
 
 	//memset all of them to 0.0
 	std::fill(uField, uField + simParams.n_cells, 0.0f);
@@ -70,6 +83,7 @@ void FluidSim::Reset()
 	std::fill(pField, pField + simParams.n_cells, 0.0f);
 	std::fill(mField, mField + simParams.n_cells, 1.0f);
 	std::fill(newMField, newMField + simParams.n_cells, 0.0f);
+	
 	
 
 	
@@ -243,7 +257,7 @@ void FluidSim::Render(sf::RenderWindow& window)
 
 				if (sField[i * simParams.n_y + j] == 0)
 				{
-					color = sf::Color(28, 91, 152, 255);
+					//color = sf::Color(28, 91, 152, 255);
 
 				}
 
@@ -354,6 +368,8 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 }
 */
 
+
+/*
 //newer version, takes 210ms to solve a 600x400 grid with 200 steps, still too slow
 void FluidSim::SolveIncompressibility(size_t numIterations, float dt) {
 	size_t n_x = simParams.n_x;
@@ -382,13 +398,17 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt) {
 		}
 	}
 
+
+	//std::execution::parallel_policy exec = std::execution::par;
+	std::execution::sequenced_policy exec = std::execution::seq;
+
 	// Iterate for the specified number of iterations
 	for (size_t iteration = 0; iteration < numIterations; ++iteration) {
 
 	
 		
 		// --- Update Red Cells ---
-		std::for_each(std::execution::par, redIndices.begin(), redIndices.end(),
+		std::for_each(exec, redIndices.begin(), redIndices.end(),
 			[&](size_t idx) {
 				size_t i = idx / n;
 				size_t j = idx % n;
@@ -427,7 +447,7 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt) {
 		sf::Clock clock;
 		clock.restart();
 		// --- Update Black Cells ---
-		std::for_each(std::execution::par, blackIndices.begin(), blackIndices.end(),
+		std::for_each(exec, blackIndices.begin(), blackIndices.end(),
 			[&](size_t idx) {
 				size_t i = idx / n;
 				size_t j = idx % n;
@@ -469,6 +489,464 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt) {
 		
 	}
 }
+*/
+
+
+/*
+Problem with the above parellization function is that it maxes out my CPU usage (from 1 thread to 24 threads),
+but only results in a 2x speedup, which is not worth it.
+
+Already we use the red-black method which is good, but I would like to try multigrid and cojugate gradient method
+and/or multigrid
+
+*/
+
+
+
+
+/*
+Logical optimizations I will try to implemenet:
+- Use newUField and newVField to store updated velocities, and rather than moving memory around,
+I will swap the pointers of the uField and newUField, and vField and newVField. each iteration
+(keeping track of them for any final swap), to make the code more parallelizable and cache friendly.
+- possible drawback includes that adjacent cells will not be cascadingly updated meaning possibly more
+iterations will be needed to reach convergence, but I think this is a good tradeoff for the possibility
+of speeding up the code.
+
+
+*/
+
+
+void VisualizeField(float*field, size_t n_x, size_t n_y)
+{
+
+
+	static sf::Image image;
+	image.create(n_x, n_y, sf::Color::Black);
+	
+
+	//get min and max
+	float min = std::numeric_limits<float>::max();
+	float max = std::numeric_limits<float>::min();
+	
+	for (size_t i = 1; i < n_x -1; i++)
+	{
+		for (size_t j = 1; j < n_y -1; j++)
+		{
+			float val = field[i * n_y + j];
+			if (val < min)
+				min = val;
+			if (val > max)
+				max = val;
+		}
+	}
+
+
+	for (size_t i = 0; i < n_x; i++)
+	{
+		for (size_t j = 0; j < n_y; j++)
+		{
+			float val = field[i * n_y + j];
+			float normalized = (val - min) / (max - min);
+			sf::Color color = sf::Color(255 * normalized, 0, 255 * (1 - normalized));
+			image.setPixel(i, j, color);
+		}
+	}
+
+	static sf::Texture texture;
+	texture.loadFromImage(image);
+	static sf::Sprite sprite(texture);
+
+
+	//rescale sprite to fit window
+	sprite.setScale((float)debugDrawWindow->getSize().x / n_x, (float)debugDrawWindow->getSize().y / n_y);
+
+	//create text
+	sf::Text text;
+	text.setFont(debugDrawFont);
+
+	//set to the top left corner
+	text.setPosition(0, 0);
+	text.setCharacterSize(20);
+	text.setFillColor(sf::Color::White);
+	text.setString("Max Value: " + std::to_string(max));
+
+	
+	debugDrawWindow->draw(sprite);
+
+	debugDrawWindow->draw(text);
+
+	debugDrawWindow->display();
+
+}
+
+//v3 optimized version, takes 330ms for 600x400 at 200 iterations instead of old 450ms
+//note this is slower than the paralell execution version, but still much better than original
+//and has more room to grow, next step is to optimize using AVX2
+
+
+/*
+void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
+{
+	size_t n = simParams.n_y;
+	float cp = simParams.density * simParams.gridSpacingX / dt;
+
+
+
+
+	//pre-computation takes about 1.8ms an saves 50ms of computation time later on with our benchmark 600x400 at 200itr example
+	//from 450ms to 400ms for the full solve incompressibility function
+
+	sf::Clock clock;
+	clock.restart();
+	
+
+
+	
+	for (size_t i = 1; i < simParams.n_x - 1; i++) {
+		for (size_t j = 1; j < simParams.n_y - 1; j++) {
+			float sx0 = sField[(i - 1) * n + j];
+			float sx1 = sField[(i + 1) * n + j];
+			float sy0 = sField[i * n + j - 1];
+			float sy1 = sField[i * n + j + 1];
+			float s = sx0 + sx1 + sy0 + sy1;
+			
+			if (s <= 1e-6)
+				sWeightTemp[i * n + j] = 0.0;
+			else
+				sWeightTemp[i * n + j] = simParams.overRelaxation / s; //precomputing division is a big optimization
+
+			//if s field itself is 0, set to 0
+			if (sField[i * n + j] == 0.0)
+			{
+				sWeightTemp[i * n + j] = 0.0;
+			}
+
+			sx0Field[i * n + j] = sx0;
+			sx1Field[i * n + j] = sx1;
+			sy0Field[i * n + j] = sy0;
+			sy1Field[i * n + j] = sy1;
+		}
+	}
+	
+
+
+	//borrow
+	float* divField = newUField;
+	
+
+	std::cout << "sField values Pre-computation took " << clock.getElapsedTime().asSeconds() * 1000.f << " ms" << std::endl;
+	
+	clock.restart();
+	
+	
+
+
+	//one thing I learned is that this gauss-seidel method needs to be done with rolling updates,
+	//i.e. precomputing the divergence is not possible
+
+	
+	
+	
+	for (size_t iteration = 0; iteration < numIterations; iteration++) {
+
+		for (size_t i = 1; i < simParams.n_x - 1; i++) {
+			for (size_t j = 1; j < simParams.n_y - 1; j++) {
+
+				size_t index = i * n + j;
+				
+				float swtmp = sWeightTemp[index];
+				
+				//if sWeightTemp is 0, continue
+				if (swtmp == 0.0) [[unlikely]]
+				{
+						continue;
+				}
+
+					
+				float div =
+					uField[(i + 1) * n + j]
+					- uField[index]
+					+ vField[index + 1]
+					- vField[index];
+
+
+				
+				//divField[index] = std::abs(div);
+
+
+
+				float p = -div * swtmp;
+
+
+
+				uField[index]        -= sx0Field[index] * p;
+				uField[(i + 1) * n + j]  += sx1Field[index] * p;
+				vField[index]        -= sy0Field[index] * p;
+				vField[index + 1]    += sy1Field[index] * p;
+
+				
+				//only update on last iteration
+				if (iteration == numIterations - 1) [[unlikely]] //branch optimijzation
+				{
+					pField[index] += cp * p;
+				}
+
+
+			}
+		}
+		
+		//VisualizeField(divField, simParams.n_x, simParams.n_y);
+		
+	}
+
+
+
+
+
+	
+
+	std::cout << "SolveIncompressibility V3 main loop took: " << clock.getElapsedTime().asSeconds() * 1000.f << " ms" << std::endl;
+
+
+	//delete
+
+
+
+	//get min and max
+	float min = std::numeric_limits<float>::max();
+	float max = std::numeric_limits<float>::min();
+
+	float sum = 0.0;
+
+	for (size_t i = 1; i < simParams.n_x - 1; i++)
+	{
+		for (size_t j = 1; j < simParams.n_y - 1; j++)
+		{
+			float val = divField[i * simParams.n_y + j];
+			if (val < min)
+				min = val;
+			if (val > max)
+				max = val;
+
+			sum += val;
+		}
+	}
+
+	simStats.maxVelocityFieldDivergence = max;
+	simStats.avgVelocityFieldDivergence = sum / (simParams.n_x * simParams.n_y);
+
+
+}
+
+*/
+
+
+void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
+{
+	size_t n = simParams.n_y;
+	float cp = simParams.density * simParams.gridSpacingX / dt;
+
+
+
+
+	//pre-computation takes about 1.8ms an saves 50ms of computation time later on with our benchmark 600x400 at 200itr example
+	//from 450ms to 400ms for the full solve incompressibility function
+
+	sf::Clock clock;
+	clock.restart();
+
+
+
+
+	#pragma omp parallel for collapse(2)
+	for (int i = 1; i < simParams.n_x - 1; ++i) {
+		for (int j = 1; j < simParams.n_y - 1; ++j) {
+			size_t idx = i * n + j;
+
+			// Access neighboring values in the sField
+			float sx0 = sField[(i - 1) * n + j];
+			float sx1 = sField[(i + 1) * n + j];
+			float sy0 = sField[i * n + j - 1];
+			float sy1 = sField[i * n + j + 1];
+
+			// Sum up the neighboring values
+			float s = sx0 + sx1 + sy0 + sy1;
+
+			// Precompute sWeightTemp
+			if (s <= 1e-6) {
+				sWeightTemp[idx] = 0.0;
+			}
+			else {
+				sWeightTemp[idx] = simParams.overRelaxation / s; // precomputing division
+			}
+
+			// If the current sField is zero, set sWeightTemp to zero
+			if (sField[idx] == 0.0) {
+				sWeightTemp[idx] = 0.0;
+			}
+
+			// Update the neighboring values for the next calculations
+			sx0Field[idx] = sx0;
+			sx1Field[idx] = sx1;
+			sy0Field[idx] = sy0;
+			sy1Field[idx] = sy1;
+		}
+	}
+
+
+
+
+	//borrow
+	float* divField = newUField;
+
+
+	std::cout << "sField values Pre-computation took " << clock.getElapsedTime().asSeconds() * 1000.f << " ms" << std::endl;
+
+	clock.restart();
+
+
+
+
+	//one thing I learned is that this gauss-seidel method needs to be done with rolling updates,
+	//i.e. precomputing the divergence is not possible
+
+
+	// Precompute red and black indices
+	std::vector<size_t> redIndices;
+	std::vector<size_t> blackIndices;
+
+	
+	redIndices.reserve((simParams.n_x - 2) * (simParams.n_y - 2) / 2);
+	blackIndices.reserve((simParams.n_x - 2) * (simParams.n_y - 2) / 2);
+
+
+
+	
+	for (size_t i = 1; i < simParams.n_x - 1; ++i) {
+		for (size_t j = 1; j < simParams.n_y - 1; ++j) {
+			size_t idx = i * n + j;
+			if ((i + j) % 2 == 0) {
+				redIndices.push_back(idx);
+			}
+			else {
+				blackIndices.push_back(idx);
+			}
+		}
+	}
+	
+	std::execution::parallel_policy exec = std::execution::par;
+
+
+	for (size_t iteration = 0; iteration < numIterations; iteration++) {
+		
+		
+		
+		
+		#pragma omp parallel for
+		for (int r = 0; r < redIndices.size(); ++r) {
+			size_t idx = redIndices[r];
+			size_t i = idx / n;
+			size_t j = idx % n;
+
+			float swtmp = sWeightTemp[idx];
+
+			// If sWeightTemp is 0, continue
+			if (swtmp == 0.0) {
+				continue;
+			}
+
+			// Calculate divergence
+			float div = uField[(i + 1) * n + j] - uField[idx] +
+				vField[idx + 1] - vField[idx];
+
+			// Compute pressure correction
+			float p = -div * swtmp;
+
+			// Update velocity fields
+			uField[idx] -= sx0Field[idx] * p;
+			uField[(i + 1) * n + j] += sx1Field[idx] * p;
+			vField[idx] -= sy0Field[idx] * p;
+			vField[idx + 1] += sy1Field[idx] * p;
+
+			// Update pressure field only on the last iteration
+			if (iteration == numIterations - 1) {
+				pField[idx] += cp * p;
+			}
+		}
+
+
+		#pragma omp parallel for
+		for (int b = 0; b < blackIndices.size(); ++b) {
+			size_t idx = blackIndices[b];
+			size_t i = idx / n;
+			size_t j = idx % n;
+
+			float swtmp = sWeightTemp[idx];
+
+			// If sWeightTemp is 0, continue
+			if (swtmp == 0.0) {
+				continue;
+			}
+
+			// Calculate divergence
+			float div = uField[(i + 1) * n + j] - uField[idx] +
+				vField[idx + 1] - vField[idx];
+
+			// Compute pressure correction
+			float p = -div * swtmp;
+
+			// Update velocity fields
+			uField[idx] -= sx0Field[idx] * p;
+			uField[(i + 1) * n + j] += sx1Field[idx] * p;
+			vField[idx] -= sy0Field[idx] * p;
+			vField[idx + 1] += sy1Field[idx] * p;
+
+			// Update pressure field only on the last iteration
+			if (iteration == numIterations - 1) {
+				pField[idx] += cp * p;
+			}
+		}
+		
+		
+	}
+	
+
+
+
+
+
+
+	std::cout << "SolveIncompressibility V4 main loop took: " << clock.getElapsedTime().asSeconds() * 1000.f << " ms" << std::endl;
+
+
+
+	//get min and max
+	float min = std::numeric_limits<float>::max();
+	float max = std::numeric_limits<float>::min();
+
+	float sum = 0.0;
+
+	for (size_t i = 1; i < simParams.n_x - 1; i++)
+	{
+		for (size_t j = 1; j < simParams.n_y - 1; j++)
+		{
+			float val = divField[i * simParams.n_y + j];
+			if (val < min)
+				min = val;
+			if (val > max)
+				max = val;
+
+			sum += val;
+		}
+	}
+
+	simStats.maxVelocityFieldDivergence = max;
+	simStats.avgVelocityFieldDivergence = sum / (simParams.n_x * simParams.n_y);
+
+
+}
+
 
 
 
@@ -608,7 +1086,7 @@ void FluidSim::AdvectVel(float dt) {
 */
 
 
-
+/*
 //new version with STL parlellization ~1.7 ms for 400x200 grid
 void FluidSim::AdvectVel(float dt) {
 
@@ -667,6 +1145,58 @@ void FluidSim::AdvectVel(float dt) {
 
 
 
+}*/
+
+//new version v3 with openMP for better performance, Xms for 400x200 grid
+void FluidSim::AdvectVel(float dt) {
+	// Approx 0.7ms
+	memcpy(newUField, uField, simParams.n_cells * sizeof(float));
+	memcpy(newVField, vField, simParams.n_cells * sizeof(float));
+
+	size_t n = simParams.n_y;
+	float h = simParams.gridSpacingX;
+	float h2 = 0.5 * h;
+
+	sf::Clock clock;
+
+	// Assuming simParams.n_x and simParams.n_y are the sizes of the grid
+	size_t totalElements = (simParams.n_x - 1) * (simParams.n_y - 1);
+
+#pragma omp parallel for
+	for (int idx = 1; idx < totalElements; ++idx) {
+		size_t i = idx / (simParams.n_y - 1) + 1;
+		size_t j = idx % (simParams.n_y - 1) + 1;
+
+		// u component
+		if (sField[i * n + j] != 0.0 && sField[(i - 1) * n + j] != 0.0 && j < simParams.n_y - 1) {
+			float x = i * h;
+			float y = j * h + h2;
+			float u = uField[i * n + j];
+			float v = avgV(i, j);
+			x = x - dt * u;
+			y = y - dt * v;
+			u = SampleField(x, y, FieldType::U_FIELD);
+			newUField[i * n + j] = u;
+		}
+
+		// v component
+		if (sField[i * n + j] != 0.0 && sField[i * n + j - 1] != 0.0 && i < simParams.n_x - 1) {
+			float x = i * h + h2;
+			float y = j * h;
+			float u = avgU(i, j);
+			float v = vField[i * n + j];
+			x = x - dt * u;
+			y = y - dt * v;
+			v = SampleField(x, y, FieldType::V_FIELD);
+			newVField[i * n + j] = v;
+		}
+	}
+
+	std::cout << "AdvectVel main loop: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
+
+	// Approx 0.3ms
+	memcpy(uField, newUField, simParams.n_cells * sizeof(float));
+	memcpy(vField, newVField, simParams.n_cells * sizeof(float));
 }
 
 
@@ -708,7 +1238,7 @@ void FluidSim::AdvectSmoke(float dt) {
 
 */
 
-
+/*
 
 //new version takes 0.8ms to advect 400x200 grid
 void FluidSim::AdvectSmoke(float dt) {
@@ -751,6 +1281,44 @@ void FluidSim::AdvectSmoke(float dt) {
 	//memcpy
 	memcpy(mField, newMField, simParams.n_cells * sizeof(float));
 }
+*/
+
+
+void FluidSim::AdvectSmoke(float dt) {
+	// Memcpy to copy the smoke field
+	memcpy(newMField, mField, simParams.n_cells * sizeof(float));
+
+	size_t n = simParams.n_y;
+	float h = simParams.gridSpacingX;
+	float h2 = 0.5 * h;
+
+	// Compute the total number of elements
+	size_t totalElements = (simParams.n_x - 2) * (simParams.n_y - 2);
+
+#pragma omp parallel for
+	for (int idx = 0; idx < totalElements; ++idx) {
+		// Map the 1D index back to 2D indices (i, j)
+		size_t i = idx / (simParams.n_y - 2) + 1;
+		size_t j = idx % (simParams.n_y - 2) + 1;
+
+		// Perform the calculations if sField is not zero
+		if (sField[i * n + j] != 0.0) {
+			float u = (uField[i * n + j] + uField[(i + 1) * n + j]) * 0.5;
+			float v = (vField[i * n + j] + vField[i * n + j + 1]) * 0.5;
+			float x = i * h + h2 - dt * u;
+			float y = j * h + h2 - dt * v;
+
+			newMField[i * n + j] = SampleField(x, y, FieldType::M_FIELD);
+		}
+	}
+
+	// Memcpy to copy the updated smoke field back
+	memcpy(mField, newMField, simParams.n_cells * sizeof(float));
+}
+
+
+
+
 
 
 void FluidSim::Simulate(float dt) {
