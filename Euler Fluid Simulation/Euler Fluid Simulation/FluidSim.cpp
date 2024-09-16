@@ -268,7 +268,19 @@ void VisualizeField(float*field, size_t n_x, size_t n_y)
 	debugDrawWindow->display();
 }
 
+bool FluidSim::PositionIsBoundary(float x, float y)
+{
+	//check if a position is a boundary cell (i.e. s = 0)
+	size_t n = simParams.n_y;
+	size_t i = std::min(std::max((size_t)(x / simParams.gridSpacingY), (size_t)0), simParams.n_x - 1);
+	size_t j = std::min(std::max((size_t)(y / simParams.gridSpacingY), (size_t)0), simParams.n_y - 1);
 
+	return sField[i * n + j] == 0.0;
+
+
+
+
+}
 
 void FluidSim::ApplyGravity(float dt, float gravity) {
 	size_t n = simParams.n_y;
@@ -1147,10 +1159,6 @@ void FluidSim::UpdateSField()
 	//fill s field with 1 
 	std::fill(sField, sField + simParams.n_cells, 1.0f);
 
-
-
-	
-
 	
 	for (auto obstacle : simParams.obstacles)
 	{
@@ -1160,8 +1168,8 @@ void FluidSim::UpdateSField()
 	for (size_t i = 0; i < simParams.n_x; i++) {
 		for (size_t j = 0; j < simParams.n_y; j++) {
 			if (sField[i * simParams.n_y + j] == 0.0f) {
-				uField[i * simParams.n_y + j] = 0.0f;
-				vField[i * simParams.n_y + j] = 0.0f;
+				uField[i * simParams.n_y + j] = simParams.mouseVelocity.x;
+				vField[i * simParams.n_y + j] = simParams.mouseVelocity.y;
 			}
 		}
 	}

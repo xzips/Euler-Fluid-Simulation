@@ -141,9 +141,13 @@
   <ItemGroup>
     <ClCompile Include="Euler Fluid Simulation.cpp" />
     <ClCompile Include="FluidSim.cpp" />
+    <ClCompile Include="Helvetica.hpp" />
+    <ClCompile Include="GUI.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Airfoil_AA_30_Degrees.hpp" />
     <ClInclude Include="FluidSim.hpp" />
+    <ClInclude Include="GUI.hpp" />
     <ClInclude Include="ModelLoading.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

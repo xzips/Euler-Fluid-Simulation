@@ -6,7 +6,7 @@
 
 
 // exists so I can run this on my android phone using the Cxxdroid app
-#define CXXDROID_COMPAT
+//#define CXXDROID_COMPAT
 
 
 extern sf::RenderWindow* debugDrawWindow;
@@ -155,6 +155,8 @@ public:
 	size_t numIterations = 60;
 	float overRelaxation = 1.9;
 
+	sf::Vector2f mouseVelocity;
+
 	float windTunnelSpeed = 0.f;
 
 	float obstacleX;
@@ -222,6 +224,8 @@ public:
 	void SetupWindTunnelBoundaries();
 
 	void SetObstacle(float x, float y, float r);
+
+	bool PositionIsBoundary(float x, float y);
 
 	void ApplyDyeSources();
 

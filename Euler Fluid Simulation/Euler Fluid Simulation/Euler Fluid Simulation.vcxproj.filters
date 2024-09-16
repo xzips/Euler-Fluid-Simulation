@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\BlobDataHeaders">
+      <UniqueIdentifier>{1fb471bd-8001-4efd-86b7-47100f970772}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Euler Fluid Simulation.cpp">
@@ -21,12 +24,24 @@
     <ClCompile Include="FluidSim.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Helvetica.hpp">
+      <Filter>Header Files\BlobDataHeaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FluidSim.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ModelLoading.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GUI.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Airfoil_AA_30_Degrees.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
