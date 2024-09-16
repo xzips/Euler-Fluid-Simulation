@@ -5,6 +5,9 @@
 #include <vector>
 
 
+// exists so I can run this on my android phone using the Cxxdroid app
+#define CXXDROID_COMPAT
+
 
 extern sf::RenderWindow* debugDrawWindow;
 extern sf::Font debugDrawFont;

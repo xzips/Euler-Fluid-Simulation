@@ -3,10 +3,18 @@
 #include "FluidSim.hpp"
 #include <thread>
 #include "SFML/Graphics.hpp"
-#include <windows.h>
 #include <string>
-#include "ModelLoading.hpp"
 #include <chrono>
+
+
+//CXXDROID is an andriod app that allows me to run the fluid
+//sim in realtime on my phone
+#ifndef CXXDROID_COMPAT
+#include <windows.h>
+#include "ModelLoading.hpp"
+#endif
+
+
 
 
 int main()
@@ -16,8 +24,15 @@ int main()
 
 	size_t fixedHeight = 1200;
 	simParams.SetGridSize(600, 400);
+	simParams.numIterations = 200;
+	
+	
+	//if CXXDROID_COMPAT is defined
+#ifdef CXXDROID_COMPAT
+	simParams.SetGridSize(330, 150);
 	simParams.numIterations = 100;
-
+	fixedHeight = 1080;
+#endif
 
 	displayParams.windowWidth = fixedHeight * (float)simParams.n_x / (float)simParams.n_y;;
 	displayParams.windowHeight = fixedHeight;
@@ -38,9 +53,18 @@ int main()
 
 	
 	
-	//Obstacle obs = Obstacle(0.4, 0.5, 0.08);
-	Obstacle obs = Obstacle(0.30, 0.48, 0.13, 0.13);
+	//Obstacle obs = Obstacle(0.6, 0.5, 0.12);
 
+#ifndef CXXDROID_COMPAT
+	Obstacle obs = Obstacle(0.30, 0.48, 0.13, 0.13);
+#endif
+	
+	//mobile scene uses bigger obstacle for better visibility
+#ifdef CXXDROID_COMPAT
+	Obstacle obs = Obstacle(0.6, 0.48, 0.06, 0.24);
+#endif
+
+	
 	fluidSim.simParams.obstacles.push_back(obs);
 	fluidSim.UpdateSField();
 
@@ -216,7 +240,16 @@ int main()
 
 			//if clicked, load the model
 			if (leftMouseClickedThisFrame) {
+
+				#ifndef CXXDROID_COMPAT
 				sf::Image img = LoadImageThroughDialog();
+
+				#endif
+
+				#ifdef CXXDROID_COMPAT
+				sf::Image img;
+
+				#endif
 
 				//check if img is valid
 				if (img.getSize().x > 0) {
