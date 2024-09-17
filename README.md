@@ -40,14 +40,18 @@ The performance on mobile is degraded a bit since I didn't bother to install Ope
 - Finally, adding multiple bodies at the same time, or perhaps runtime-editable boundary conditions or fluid sources could be interesting.
 
 - 
-### Resources for Initial Implementation
+## Resources
+### Initial Implementation
 - https://en.wikipedia.org/wiki/Euler_equations_(fluid_dynamics)
 - https://matthias-research.github.io/pages/tenMinutePhysics/17-fluidSim.pdf
 - https://quangduong.me/notes/eulerian_fluid_sim_p1/
 - https://mikeash.com/pyblog/fluid-simulation-for-dummies.html
 
-### Resources for Optimization
+### Optimization
 - https://en.wikipedia.org/wiki/Gauss%E2%80%93Seidel_method
 - https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf
 - https://www.wias-berlin.de/people/john/LEHRE/MULTIGRID/multigrid.pdf
 - https://math.mit.edu/classes/18.086/2006/am63.pdf
+
+### Visualization
+- https://www.kennethmoreland.com/color-advice/
