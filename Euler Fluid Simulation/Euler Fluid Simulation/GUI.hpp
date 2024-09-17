@@ -27,6 +27,8 @@ private:
     sf::Text previousModelText, nextModelText;
     sf::Text modelTitleText;
 
+    sf::Text copyrightText;
+
     sf::Text selectedModelText;
 
     sf::Font font;

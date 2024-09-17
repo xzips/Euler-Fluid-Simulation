@@ -29,7 +29,7 @@ int main() {
     simParams.windTunnelSpeed = 2.f;
     simParams.overRelaxation = 1.9f;
 
-    sf::RenderWindow window(sf::VideoMode(displayParams.windowWidth, displayParams.windowHeight), "Euler Fluid Simulation");
+	sf::RenderWindow window(sf::VideoMode(displayParams.windowWidth, displayParams.windowHeight), "Euler Fluid Simulation", sf::Style::Close);
     window.setFramerateLimit(displayParams.maxFps);
 
     debugDrawWindow = &window;

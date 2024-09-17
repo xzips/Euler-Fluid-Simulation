@@ -32,6 +32,13 @@ GUI::GUI(FluidSim* fluidSim, int windowWidth, int windowHeight, int maxFps) {
     text3.setFillColor(sf::Color::White);
     text3.setPosition(1200, 5);
 
+	copyrightText.setFont(font);
+	copyrightText.setCharacterSize(28);
+    copyrightText.setFillColor(sf::Color(255, 255, 255, 140));
+    copyrightText.setString(sf::String(L"©Aspen Erlandsson 2024"));
+	copyrightText.setPosition(5, (float)(windowHeight - 34));
+    
+
     // Initialize buttons
     loadModelButtonPosition = sf::Vector2f((float)(windowWidth - 100), 50.f);
     loadModelButton.setSize(sf::Vector2f(150, 40));
@@ -238,6 +245,7 @@ void GUI::draw(sf::RenderWindow& window) {
     window.draw(resetButton);
     window.draw(resetText);
     window.draw( selectedModelText);
+    window.draw(copyrightText);
 
     // Draw built-in models title and buttons
     window.draw(modelTitleText);
