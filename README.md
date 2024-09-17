@@ -1,4 +1,4 @@
-# Multiplatform Optimized Parallel Eulerian Fluid Simulation
+# Multithreaded, Cross-platform, Optimized Eulerian Fluid Simulation
 
 ## Overview
 This project implements an Eulerian fluid solver in C++ and SFML, capable of simulating fluid flow around objects such as a circle or an airfoil. The solver discretizes the fluid domain using a grid-based approach, solving the Euler equations numerically to capture the fluid's motion. Several optimizations are implemented to speed up execution, including Red-Black Gauss-Seidel method, with all performance-critical functions running on all available CPU cores using OpenMP.
