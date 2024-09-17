@@ -33,7 +33,7 @@ GUI::GUI(FluidSim* fluidSim, int windowWidth, int windowHeight, int maxFps) {
     text3.setPosition(1200, 5);
 
     // Initialize buttons
-    loadModelButtonPosition = sf::Vector2f(windowWidth - 100, 50);
+    loadModelButtonPosition = sf::Vector2f((float)(windowWidth - 100), 50.f);
     loadModelButton.setSize(sf::Vector2f(150, 40));
     loadModelButton.setFillColor(sf::Color(70, 70, 70));
     loadModelButton.setOrigin(loadModelButton.getLocalBounds().width / 2, loadModelButton.getLocalBounds().height / 2);
@@ -46,7 +46,7 @@ GUI::GUI(FluidSim* fluidSim, int windowWidth, int windowHeight, int maxFps) {
     loadModelText.setOrigin(loadModelText.getLocalBounds().width / 2, loadModelText.getLocalBounds().height / 2 + 5);
     loadModelText.setPosition(loadModelButtonPosition);
 
-    resetButtonPosition = sf::Vector2f(windowWidth - 100, 100);
+    resetButtonPosition = sf::Vector2f((float)(windowWidth - 100), 100.f);
     resetButton.setSize(sf::Vector2f(150, 40));
     resetButton.setFillColor(sf::Color(70, 70, 70));
     resetButton.setOrigin(resetButton.getLocalBounds().width / 2, resetButton.getLocalBounds().height / 2);
@@ -64,18 +64,18 @@ GUI::GUI(FluidSim* fluidSim, int windowWidth, int windowHeight, int maxFps) {
     modelTitleText.setCharacterSize(18);
     modelTitleText.setFillColor(sf::Color::White);
     modelTitleText.setString("Built-in Models:");
-    modelTitleText.setPosition(windowWidth - 160, 150);  // Title position
+    modelTitleText.setPosition((float)(windowWidth - 160), (float)150);  // Title position
 
     selectedModelText.setFont(font);
     selectedModelText.setCharacterSize(18);
     selectedModelText.setFillColor(sf::Color(245, 81, 81));
     selectedModelText.setString(modelNames[selectedModelIndex]);
-    selectedModelText.setPosition(windowWidth - 100, 178);  // Selected model position
+    selectedModelText.setPosition((float)(windowWidth - 100), (float)178);  // Selected model position
     //center
     selectedModelText.setOrigin(selectedModelText.getLocalBounds().width / 2, selectedModelText.getLocalBounds().height / 2);
 
 
-    previousModelButtonPosition = sf::Vector2f(windowWidth - 180, 200);
+    previousModelButtonPosition = sf::Vector2f((float)(windowWidth - 180), 200.f);
     previousModelButton.setSize(sf::Vector2f(70, 50));
     previousModelButton.setFillColor(sf::Color(70, 70, 70));
     previousModelButton.setPosition(previousModelButtonPosition);
@@ -87,7 +87,7 @@ GUI::GUI(FluidSim* fluidSim, int windowWidth, int windowHeight, int maxFps) {
     previousModelText.setOrigin(previousModelText.getLocalBounds().width / 2, previousModelText.getLocalBounds().height / 2);
     previousModelText.setPosition(previousModelButtonPosition.x + 32, previousModelButtonPosition.y + 12);
 
-    nextModelButtonPosition = sf::Vector2f(windowWidth - 90, 200);
+    nextModelButtonPosition = sf::Vector2f((float)(windowWidth - 90), 200.f);
     nextModelButton.setSize(sf::Vector2f(70, 50));
     nextModelButton.setFillColor(sf::Color(70, 70, 70));
     nextModelButton.setPosition(nextModelButtonPosition);
@@ -114,7 +114,7 @@ void GUI::update(sf::RenderWindow& window, const sf::Vector2f& pointerPosition, 
             sf::Image img;
 #endif
             if (img.getSize().x > 0) {
-                Obstacle obs(img, 0.7, 0.5, 0.7);
+                Obstacle obs(img, 0.7f, 0.5f, 0.7f);
                 fluidSim->simParams.obstacles.clear();
                 fluidSim->simParams.obstacles.push_back(obs);
                 fluidSim->UpdateSField();
@@ -262,7 +262,7 @@ void GUI::LoadBuiltInModel(int index)
     //if name is circle
     if (modelNames[index] == "Circle")
     {
-		Obstacle obs(0.5, 0.5, 0.14);
+		Obstacle obs(0.5f, 0.5f, 0.14f);
 		fluidSim->simParams.obstacles.clear();
 		fluidSim->simParams.obstacles.push_back(obs);
 		fluidSim->UpdateSField();
@@ -272,7 +272,7 @@ void GUI::LoadBuiltInModel(int index)
     //if name is square
     if (modelNames[index] == "Square")
     {
-		Obstacle obs(0.5, 0.5, 0.2, 0.2);
+		Obstacle obs(0.5f, 0.5f, 0.2f, 0.2f);
 		fluidSim->simParams.obstacles.clear();
 		fluidSim->simParams.obstacles.push_back(obs);
 		fluidSim->UpdateSField();
@@ -285,7 +285,7 @@ void GUI::LoadBuiltInModel(int index)
 
         loadedImage.loadFromMemory(airfoil_aa_30_degrees, 118227);
 
-        Obstacle obs(loadedImage, 0.8, 0.5, 0.8);
+        Obstacle obs(loadedImage, 0.8f, 0.5f, 0.8f);
         
         fluidSim->simParams.obstacles.clear();
 		fluidSim->simParams.obstacles.push_back(obs);

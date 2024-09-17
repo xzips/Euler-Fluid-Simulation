@@ -12,9 +12,9 @@ int main() {
     SimParameters simParams;
     DisplayParameters displayParams;
 
-    size_t fixedHeight = 800;
-    simParams.SetGridSize(400, 200);
-    simParams.numIterations = 100;
+    size_t fixedHeight = 1080;
+    simParams.SetGridSize(444, 250);
+    simParams.numIterations = 140;
 
 #ifdef CXXDROID_COMPAT
     simParams.SetGridSize(220, 100);
@@ -22,12 +22,12 @@ int main() {
     fixedHeight = 1080;
 #endif
 
-    displayParams.windowWidth = fixedHeight * (float)simParams.n_x / (float)simParams.n_y;
+    displayParams.windowWidth = (size_t)(fixedHeight * (float)simParams.n_x / (float)simParams.n_y);
     displayParams.windowHeight = fixedHeight;
     displayParams.maxFps = 60;
 
     simParams.windTunnelSpeed = 2.f;
-    simParams.overRelaxation = 1.9;
+    simParams.overRelaxation = 1.9f;
 
     sf::RenderWindow window(sf::VideoMode(displayParams.windowWidth, displayParams.windowHeight), "Euler Fluid Simulation");
     window.setFramerateLimit(displayParams.maxFps);
@@ -42,7 +42,7 @@ int main() {
     float dyeLineSpacing = 1.f / (float)simParams.n_y;
     for (size_t i = 0; i < simParams.n_y; i++) {
         if (i % 10 == 0) {
-            fluidSim.AddDyeSource(0.01, 0.05 + i * dyeLineSpacing, 0.02, 0.001, 0);
+            fluidSim.AddDyeSource(0.01f, 0.05f + i * dyeLineSpacing, 0.02f, 0.001f, 0.f);
         }
     }
 
@@ -88,18 +88,18 @@ int main() {
 
 
 
-        sf::Vector2f pointerPosition = sf::Vector2f(pointerPositionInt.x, pointerPositionInt.y);
+        sf::Vector2f pointerPosition = sf::Vector2f((float)pointerPositionInt.x, (float)pointerPositionInt.y);
 
         float currentTime = frameClock.restart().asSeconds();
         float fps = 1.f / (currentTime);
 
         simClock.restart();
         fluidSim.Simulate(0.005f);
-        float simTime = simClock.restart().asMicroseconds();
+        float simTime = (float)simClock.restart().asMicroseconds();
 
         renderClock.restart();
         fluidSim.Render(window);
-        float renderTime = renderClock.restart().asMicroseconds();
+        float renderTime = (float)renderClock.restart().asMicroseconds();
 
         gui.updateText(fps, simTime, renderTime, currentTime);
         gui.update(window, pointerPosition, leftMouseClickedThisFrame, mouseUnclickedThisFrame);

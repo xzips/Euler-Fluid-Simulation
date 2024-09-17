@@ -127,7 +127,7 @@ void FluidSim::Render(sf::RenderWindow& window)
 		sprite.setTexture(texture);
 	}
 
-	if (displayParams.showSmoke)
+	if (displayParams.showDye)
 	{
 		float min_M = INFINITY;
 		float max_M = -INFINITY;
@@ -163,9 +163,9 @@ void FluidSim::Render(sf::RenderWindow& window)
 				if (M_norm > 1)
 					M_norm = 1;
 
-				color.r = (255 * M_norm);
-				color.g = (255 * M_norm);
-				color.b = (255 * M_norm);
+				color.r = (sf::Uint8)(255 * M_norm);
+				color.g = (sf::Uint8)(255 * M_norm);
+				color.b = (sf::Uint8)(255 * M_norm);
 				
 
 				if (sField[i * simParams.n_y + j] == 0)
@@ -237,7 +237,7 @@ void VisualizeField(float*field, size_t n_x, size_t n_y)
 		{
 			float val = field[i * n_y + j];
 			float normalized = (val - min) / (max - min);
-			sf::Color color = sf::Color(255 * normalized, 0, 255 * (1 - normalized));
+			sf::Color color = sf::Color((sf::Uint8)(255.f * normalized), 0, (sf::Uint8)(255.f * (1 - normalized)));
 			image.setPixel(i, j, color);
 		}
 	}
@@ -379,10 +379,10 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 
 
 #ifdef _OPENMP
-	#pragma omp parallel for collapse(2)
+	#pragma omp parallel // for collapse(2) //seemed to generate a warning it was being ignored, so I removed it lol
 #endif
-	for (int i = 1; i < simParams.n_x - 1; ++i) {
-		for (int j = 1; j < simParams.n_y - 1; ++j) {
+	for (int i = 1; i < (int)simParams.n_x - 1; ++i) {
+		for (int j = 1; j < (int)simParams.n_y - 1; ++j) {
 			size_t idx = i * n + j;
 
 			// Access neighboring values in the sField
@@ -465,7 +465,7 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 #ifdef _OPENMP
 		#pragma omp parallel for
 #endif
-		for (int r = 0; r < redIndices.size(); ++r) {
+		for (int r = 0; r < (int)redIndices.size(); ++r) {
 			size_t idx = redIndices[r];
 			size_t i = idx / n;
 			size_t j = idx % n;
@@ -499,7 +499,7 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 #ifdef _OPENMP
 		#pragma omp parallel for
 #endif
-		for (int b = 0; b < blackIndices.size(); ++b) {
+		for (int b = 0; b < (int)blackIndices.size(); ++b) {
 			size_t idx = blackIndices[b];
 			size_t i = idx / n;
 			size_t j = idx % n;
@@ -629,7 +629,7 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 
 
 //this function only takes 0.6ms for a 600x400 grid and turns out to be slower when paralellized, so will leave it as sequential execution
-void FluidSim::Extrapolate() {
+void FluidSim::SolveBoundaries() {
 	size_t n = simParams.n_y;
 	for (size_t i = 0; i < simParams.n_x; i++) {
 		uField[i * n + 0] = uField[i * n + 1];
@@ -646,14 +646,14 @@ void FluidSim::Extrapolate() {
 float FluidSim::SampleField(float x, float y, FieldType field) {
 	size_t n = simParams.n_y;
 	float h = simParams.gridSpacingX;
-	float h1 = 1.0 / h;
-	float h2 = 0.5 * h;
+	float h1 = 1.f / h;
+	float h2 = 0.5f * h;
 	
 	x = std::max(std::min(x, (float)simParams.n_x * h), h);
 	y = std::max(std::min(y, (float)simParams.n_y * h), h);
 
-	float dx = 0.0;
-	float dy = 0.0;
+	float dx = 0.0f;
+	float dy = 0.0f;
 
 	float *f = nullptr;
 
@@ -669,20 +669,20 @@ float FluidSim::SampleField(float x, float y, FieldType field) {
 		return 0.0;
 	}
 
-	size_t x0 = std::min(floor((x - dx) * h1), (float)simParams.n_x - 1);
+	size_t x0 = (size_t)std::min(floor((x - dx) * h1), (float)simParams.n_x - 1);
 	
 	float tx = ((x - dx) - x0 * h) * h1;
 	size_t x1 = std::min(x0 + 1, simParams.n_x - 1);
 
 
-	size_t y0 = std::min(floor((y - dy) * h1), (float)simParams.n_y - 1);
+	size_t y0 = (size_t)std::min(floor((y - dy) * h1), (float)simParams.n_y - 1);
 	
 	
 	float ty = ((y - dy) - y0 * h) * h1;
 	size_t y1 = std::min(y0 + 1, simParams.n_y - 1);
 
-	float sx = 1.0 - tx;
-	float sy = 1.0 - ty;
+	float sx = 1.0f - tx;
+	float sy = 1.0f - ty;
 
 	float val = sx * sy * f[x0 * n + y0] +
 		tx * sy * f[x1 * n + y0] +
@@ -698,7 +698,7 @@ float FluidSim::SampleField(float x, float y, FieldType field) {
 float FluidSim::avgU(size_t i, size_t j) {
 	size_t n = simParams.n_y;
 	float u = (uField[i * n + j - 1] + uField[i * n + j] +
-		uField[(i + 1) * n + j - 1] + uField[(i + 1) * n + j]) * 0.25;
+		uField[(i + 1) * n + j - 1] + uField[(i + 1) * n + j]) * 0.25f;
 	return u;
 
 }
@@ -706,13 +706,13 @@ float FluidSim::avgU(size_t i, size_t j) {
 float FluidSim::avgV(size_t i, size_t j) {
 	size_t n = simParams.n_y;
 	float v = (vField[(i - 1) * n + j] + vField[i * n + j] +
-		vField[(i - 1) * n + j + 1] + vField[i * n + j + 1]) * 0.25;
+		vField[(i - 1) * n + j + 1] + vField[i * n + j + 1]) * 0.25f;
 	return v;
 }
 
 /*
 //old version takes ~29ms for 600x400 grid
-void FluidSim::AdvectVel(float dt) {
+void FluidSim::AdvectVelocity(float dt) {
 
 
 	//approx 0.7ms
@@ -756,7 +756,7 @@ void FluidSim::AdvectVel(float dt) {
 		}
 	}
 
-	std::cout << "AdvectVel main loop: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
+	std::cout << "AdvectVelocity main loop: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 
 	//aprox 0.3ms
 	memcpy(uField, newUField, simParams.n_cells * sizeof(float));
@@ -767,19 +767,19 @@ void FluidSim::AdvectVel(float dt) {
 
 
 //new version with openMP for better performance, 3.1ms for 600x400 grid, 10x peformance gain
-void FluidSim::AdvectVel(float dt) {
+void FluidSim::AdvectVelocity(float dt) {
 	// Approx 0.7ms
 	memcpy(newUField, uField, simParams.n_cells * sizeof(float));
 	memcpy(newVField, vField, simParams.n_cells * sizeof(float));
 
 	size_t n = simParams.n_y;
 	float h = simParams.gridSpacingX;
-	float h2 = 0.5 * h;
+	float h2 = 0.5f * h;
 
 	sf::Clock clock;
 
 	// Assuming simParams.n_x and simParams.n_y are the sizes of the grid
-	size_t totalElements = (simParams.n_x - 1) * (simParams.n_y - 1);
+	int totalElements = (int)(simParams.n_x - 1) * (simParams.n_y - 1);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -812,7 +812,7 @@ void FluidSim::AdvectVel(float dt) {
 		}
 	}
 
-	std::cout << "AdvectVel main loop: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
+	std::cout << "AdvectVelocity main loop: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 
 	// Approx 0.3ms
 	memcpy(uField, newUField, simParams.n_cells * sizeof(float));
@@ -825,7 +825,7 @@ void FluidSim::AdvectVel(float dt) {
 //old version using about 13.1ms to advect 600x400 grid
 
 /*
-void FluidSim::AdvectSmoke(float dt) {
+void FluidSim::AdvectDye(float dt) {
 
 
 	//memcpy
@@ -860,16 +860,16 @@ void FluidSim::AdvectSmoke(float dt) {
 
 
 //new version takes about 1.6ms to advect 600x400 grid, that's an 8x improvement
-void FluidSim::AdvectSmoke(float dt) {
-	// Memcpy to copy the smoke field
+void FluidSim::AdvectDye(float dt) {
+	// Memcpy to copy the dye field
 	memcpy(newMField, mField, simParams.n_cells * sizeof(float));
 
 	size_t n = simParams.n_y;
 	float h = simParams.gridSpacingX;
-	float h2 = 0.5 * h;
+	float h2 = 0.5f * h;
 
 	// Compute the total number of elements
-	size_t totalElements = (simParams.n_x - 2) * (simParams.n_y - 2);
+	int totalElements = (int)(simParams.n_x - 2) * (simParams.n_y - 2);
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -880,8 +880,8 @@ void FluidSim::AdvectSmoke(float dt) {
 
 		// Perform the calculations if sField is not zero
 		if (sField[i * n + j] != 0.0) {
-			float u = (uField[i * n + j] + uField[(i + 1) * n + j]) * 0.5;
-			float v = (vField[i * n + j] + vField[i * n + j + 1]) * 0.5;
+			float u = (uField[i * n + j] + uField[(i + 1) * n + j]) * 0.5f;
+			float v = (vField[i * n + j] + vField[i * n + j + 1]) * 0.5f;
 			float x = i * h + h2 - dt * u;
 			float y = j * h + h2 - dt * v;
 
@@ -889,7 +889,7 @@ void FluidSim::AdvectSmoke(float dt) {
 		}
 	}
 
-	// Memcpy to copy the updated smoke field back
+	// Memcpy to copy the updated dye field back
 	memcpy(mField, newMField, simParams.n_cells * sizeof(float));
 }
 
@@ -917,18 +917,18 @@ void FluidSim::Simulate(float dt) {
 	std::cout << "Time taken to solve incompressibility: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 	
 	clock.restart();
-	Extrapolate();
+	SolveBoundaries();
 	std::cout << "Time taken to solve boundaries: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 	
 	
 	clock.restart();
-	AdvectVel(dt);
+	AdvectVelocity(dt);
 	std::cout << "Time taken to advect velocity: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 
 	
 	clock.restart();
-	AdvectSmoke(dt);
-	std::cout << "Time taken to advect smoke: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
+	AdvectDye(dt);
+	std::cout << "Time taken to advect dye: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 
 }
 
@@ -942,14 +942,14 @@ void FluidSim::ApplyDyeSources()
 		float x = dyeSource.x * simParams.n_x;
 		float y = dyeSource.y * simParams.n_y;
 		
-		float width = dyeSource.width * simParams.n_x;
-		float height = dyeSource.height * simParams.n_y;
+		float width = (float)(dyeSource.width * simParams.n_x);
+		float height = (float)(dyeSource.height * simParams.n_y);
 
-		for (size_t i = x - width / 2; i < x + width / 2; i++)
+		for (int i = (int)(x - width / 2); i < x + width / 2; i++)
 		{
-			for (size_t j = y - height / 2; j < y + height / 2; j++)
+			for (int j = (int)(y - height / 2); j < y + height / 2; j++)
 			{
-				if (i >= 1 && i < simParams.n_x - 1 && j >= 1 && j < simParams.n_y - 1)
+				if (i >= 1 && i < (int)simParams.n_x - 1 && j >= 1 && j < (int)simParams.n_y - 1)
 				{
 					mField[i * simParams.n_y + j] = dyeSource.density;
 				}
@@ -982,15 +982,15 @@ void FluidSim::SetObstacle(float x, float y, float r) {
 
 	
 	size_t n = simParams.n_y;
-	float cd = sqrt(2) * simParams.gridSpacingX;
+	float cd = sqrt(2.f) * simParams.gridSpacingX;
 
 	for (size_t i = 1; i < simParams.n_x - 2; i++) {
 		for (size_t j = 1; j < simParams.n_y - 2; j++) {
 
 			//sField[i * n + j] = 1.0;
 
-			float dx = (i + 0.5) * simParams.gridSpacingX - x;
-			float dy = (j + 0.5) * simParams.gridSpacingY - y;
+			float dx = (i + 0.5f) * simParams.gridSpacingX - x;
+			float dy = (j + 0.5f) * simParams.gridSpacingY - y;
 
 			if (dx * dx + dy * dy < r * r) {
 				sField[i * n + j] = 0.0;
@@ -1019,15 +1019,15 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 		float vy = 0.0;
 
 		size_t n = fluidSim->simParams.n_y;
-		float cd = sqrt(2) * fluidSim->simParams.gridSpacingX;
+		float cd = sqrt(2.f) * fluidSim->simParams.gridSpacingX;
 
 		for (size_t i = 1; i < fluidSim->simParams.n_x - 2; i++) {
 			for (size_t j = 1; j < fluidSim->simParams.n_y - 2; j++) {
 
 				//sField[i * n + j] = 1.0;
 
-				float dx = (i + 0.5) * fluidSim->simParams.gridSpacingY - x;
-				float dy = (j + 0.5) * fluidSim->simParams.gridSpacingY - y;
+				float dx = (i + 0.5f) * fluidSim->simParams.gridSpacingY - x;
+				float dy = (j + 0.5f) * fluidSim->simParams.gridSpacingY - y;
 
 				if (dx * dx + dy * dy < radius * radius) {
 					fluidSim->sField[i * n + j] = 0.0;
@@ -1051,20 +1051,20 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 		float vy = 0.0;
 
 		size_t n = fluidSim->simParams.n_y;
-		float cd = sqrt(2) * fluidSim->simParams.gridSpacingX;
+		float cd = sqrt(2.f) * fluidSim->simParams.gridSpacingX;
 
 		for (size_t i = 1; i < fluidSim->simParams.n_x - 2; i++) {
 			for (size_t j = 1; j < fluidSim->simParams.n_y - 2; j++) {
 
 				//sField[i * n + j] = 1.0;
 
-				float dx = (i + 0.5) * fluidSim->simParams.gridSpacingY - x;
-				float dy = (j + 0.5) * fluidSim->simParams.gridSpacingY - y;
+				float dx = (i + 0.5f) * fluidSim->simParams.gridSpacingY - x;
+				float dy = (j + 0.5f) * fluidSim->simParams.gridSpacingY - y;
 
 				if (dx > -width / 2 && dx < width / 2 && dy > -height / 2 && dy < height / 2) {
-					fluidSim->sField[i * n + j] = 0.0;
+					fluidSim->sField[i * n + j] = 0.0f;
 
-					fluidSim->mField[i * n + j] = 1.0;
+					fluidSim->mField[i * n + j] = 1.0f;
 
 					//if we are on the boundary set u and v to vx and vy
 					if (dx == -width / 2 || dx == width / 2 || dy == -height / 2 || dy == height / 2)

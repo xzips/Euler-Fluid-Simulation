@@ -91,12 +91,12 @@ public:
 	}
 	
 
-	float x = 0.5;
-	float y = 0.5;
-	float radius = 0.1;
-	float width = 0.1;
-	float height = 0.1;
-	float scale = 1;
+	float x = 0.5f;
+	float y = 0.5f;
+	float radius = 0.1f;
+	float width = 0.1f;
+	float height = 0.1f;
+	float scale = 1.f;
 	ObstacleType type = ObstacleType::CIRCLE;
 	sf::Image modelImage;
 	sf::Texture modelTexture;
@@ -131,10 +131,10 @@ public:
 	}
 
 	RectangularDyeSource() {}
-	float x = 0.5;
-	float y = 0.5;
-	float width = 0.1;
-	float height = 0.1;
+	float x = 0.5f;
+	float y = 0.5f;
+	float width = 0.1f;
+	float height = 0.1f;
 	float density = 0.f;
 };
 
@@ -154,7 +154,7 @@ public:
 	
 	float gravity = 0.f;
 	size_t numIterations = 60;
-	float overRelaxation = 1.9;
+	float overRelaxation = 1.9f;
 
 	sf::Vector2f mouseVelocity;
 
@@ -194,7 +194,7 @@ public:
 	bool showStreamlines = false;
 	bool showVelocities = false;
 	bool showPressure = false;
-	bool showSmoke = true;
+	bool showDye= true;
 };
 
 
@@ -207,13 +207,13 @@ public:
 
 	void SolveIncompressibility(size_t numIterations, float dt);
 	
-	void Extrapolate();
+	void SolveBoundaries();
 
 	float SampleField(float x, float y, FieldType fieldType);
 
-	void AdvectVel(float dt);
+	void AdvectVelocity(float dt);
 
-	void AdvectSmoke(float dt);
+	void AdvectDye(float dt);
 
 	void UpdateSField();
 
