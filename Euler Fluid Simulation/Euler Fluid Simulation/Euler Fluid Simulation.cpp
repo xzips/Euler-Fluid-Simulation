@@ -17,7 +17,7 @@ int main() {
     simParams.numIterations = 100;
 
 #ifdef CXXDROID_COMPAT
-    simParams.SetGridSize(330, 150);
+    simParams.SetGridSize(220, 100);
     simParams.numIterations = 100;
     fixedHeight = 1080;
 #endif
@@ -26,7 +26,7 @@ int main() {
     displayParams.windowHeight = fixedHeight;
     displayParams.maxFps = 60;
 
-    simParams.windTunnelSpeed = 5.f;
+    simParams.windTunnelSpeed = 2.f;
     simParams.overRelaxation = 1.9;
 
     sf::RenderWindow window(sf::VideoMode(displayParams.windowWidth, displayParams.windowHeight), "Euler Fluid Simulation");

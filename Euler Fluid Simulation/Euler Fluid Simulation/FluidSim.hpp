@@ -6,6 +6,7 @@
 
 
 // exists so I can run this on my android phone using the Cxxdroid app
+//if you're running this on a desktop, comment this out as it is by default
 //#define CXXDROID_COMPAT
 
 

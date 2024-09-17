@@ -669,12 +669,15 @@ float FluidSim::SampleField(float x, float y, FieldType field) {
 		return 0.0;
 	}
 
-	size_t x0 = std::min(std::floor((x - dx) * h1), (float)simParams.n_x - 1);
+	size_t x0 = std::min(floor((x - dx) * h1), (float)simParams.n_x - 1);
+	
 	float tx = ((x - dx) - x0 * h) * h1;
 	size_t x1 = std::min(x0 + 1, simParams.n_x - 1);
 
 
-	size_t y0 = std::min(std::floor((y - dy) * h1), (float)simParams.n_y - 1);
+	size_t y0 = std::min(floor((y - dy) * h1), (float)simParams.n_y - 1);
+	
+	
 	float ty = ((y - dy) - y0 * h) * h1;
 	size_t y1 = std::min(y0 + 1, simParams.n_y - 1);
 
@@ -1062,10 +1065,21 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 					fluidSim->sField[i * n + j] = 0.0;
 
 					fluidSim->mField[i * n + j] = 1.0;
-					fluidSim->uField[i * n + j] = vx;
-					fluidSim->uField[(i + 1) * n + j] = vx;
-					fluidSim->vField[i * n + j] = vy;
-					fluidSim->vField[i * n + j + 1] = vy;
+
+					//if we are on the boundary set u and v to vx and vy
+					if (dx == -width / 2 || dx == width / 2 || dy == -height / 2 || dy == height / 2)
+					{
+						fluidSim->uField[i * n + j] = fluidSim->simParams.mouseVelocity.x;
+						fluidSim->uField[(i + 1) * n + j] = fluidSim->simParams.mouseVelocity.x;
+						fluidSim->vField[i * n + j] = fluidSim->simParams.mouseVelocity.y;
+						fluidSim->vField[i * n + j + 1] = fluidSim->simParams.mouseVelocity.y;
+					}
+					else {
+						fluidSim->uField[i * n + j] = 0.0;
+						fluidSim->uField[(i + 1) * n + j] = 0.0;
+						fluidSim->vField[i * n + j] = 0.0;
+						fluidSim->vField[i * n + j + 1] = 0.0;
+					}
 
 					//std::cout << "i: " << i << " j: " << j << std::endl;
 

@@ -6,7 +6,7 @@
 
 
 // exists so I can run this on my android phone using the Cxxdroid app
-#define CXXDROID_COMPAT
+//#define CXXDROID_COMPAT
 
 
 extern sf::RenderWindow* debugDrawWindow;
@@ -155,6 +155,8 @@ public:
 	size_t numIterations = 60;
 	float overRelaxation = 1.9;
 
+	sf::Vector2f mouseVelocity;
+
 	float windTunnelSpeed = 0.f;
 
 	float obstacleX;
@@ -223,6 +225,8 @@ public:
 
 	void SetObstacle(float x, float y, float r);
 
+	bool PositionIsBoundary(float x, float y);
+
 	void ApplyDyeSources();
 
 	void AddDyeSource(float x, float y, float width, float height, float density);
@@ -269,6 +273,9 @@ public:
 };
 
 
+
+
+#include "FluidSim.hpp"
 
 #include <string>
 
@@ -538,7 +545,19 @@ void VisualizeField(float*field, size_t n_x, size_t n_y)
 	debugDrawWindow->display();
 }
 
+bool FluidSim::PositionIsBoundary(float x, float y)
+{
+	//check if a position is a boundary cell (i.e. s = 0)
+	size_t n = simParams.n_y;
+	size_t i = std::min(std::max((size_t)(x / simParams.gridSpacingY), (size_t)0), simParams.n_x - 1);
+	size_t j = std::min(std::max((size_t)(y / simParams.gridSpacingY), (size_t)0), simParams.n_y - 1);
 
+	return sField[i * n + j] == 0.0;
+
+
+
+
+}
 
 void FluidSim::ApplyGravity(float dt, float gravity) {
 	size_t n = simParams.n_y;
@@ -1320,10 +1339,21 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 					fluidSim->sField[i * n + j] = 0.0;
 
 					fluidSim->mField[i * n + j] = 1.0;
-					fluidSim->uField[i * n + j] = vx;
-					fluidSim->uField[(i + 1) * n + j] = vx;
-					fluidSim->vField[i * n + j] = vy;
-					fluidSim->vField[i * n + j + 1] = vy;
+
+					//if we are on the boundary set u and v to vx and vy
+					if (dx == -width / 2 || dx == width / 2 || dy == -height / 2 || dy == height / 2)
+					{
+						fluidSim->uField[i * n + j] = fluidSim->simParams.mouseVelocity.x;
+						fluidSim->uField[(i + 1) * n + j] = fluidSim->simParams.mouseVelocity.x;
+						fluidSim->vField[i * n + j] = fluidSim->simParams.mouseVelocity.y;
+						fluidSim->vField[i * n + j + 1] = fluidSim->simParams.mouseVelocity.y;
+					}
+					else {
+						fluidSim->uField[i * n + j] = 0.0;
+						fluidSim->uField[(i + 1) * n + j] = 0.0;
+						fluidSim->vField[i * n + j] = 0.0;
+						fluidSim->vField[i * n + j + 1] = 0.0;
+					}
 
 					//std::cout << "i: " << i << " j: " << j << std::endl;
 
@@ -1417,10 +1447,6 @@ void FluidSim::UpdateSField()
 	//fill s field with 1 
 	std::fill(sField, sField + simParams.n_cells, 1.0f);
 
-
-
-	
-
 	
 	for (auto obstacle : simParams.obstacles)
 	{
@@ -1430,8 +1456,8 @@ void FluidSim::UpdateSField()
 	for (size_t i = 0; i < simParams.n_x; i++) {
 		for (size_t j = 0; j < simParams.n_y; j++) {
 			if (sField[i * simParams.n_y + j] == 0.0f) {
-				uField[i * simParams.n_y + j] = 0.0f;
-				vField[i * simParams.n_y + j] = 0.0f;
+				uField[i * simParams.n_y + j] = simParams.mouseVelocity.x;
+				vField[i * simParams.n_y + j] = simParams.mouseVelocity.y;
 			}
 		}
 	}
@@ -1551,325 +1577,355 @@ void Obstacle::DrawObstaclePretty(sf::RenderWindow& window)
 }
 
 
-#include <iostream>
-#include <vector>
-#include "FluidSim.hpp"
-#include <thread>
+#pragma once
+
 #include "SFML/Graphics.hpp"
-#include <string>
-#include <chrono>
+#include "FluidSim.hpp"
+
+class GUI {
+public:
+    // Constructor
+    GUI(FluidSim* fluidSim, int windowWidth, int windowHeight, int maxFps);
+
+    // Methods
+    void update(sf::RenderWindow& window, const sf::Vector2f& pointerPosition, bool leftMouseClickedThisFrame, bool mouseUnclickedThisFrame);
+    void draw(sf::RenderWindow& window);
+    void updateText(float fps, float simTime, float renderTime, float currentTime);
+
+    void LoadBuiltInModel(int index);
+
+private:
+    FluidSim* fluidSim;  // Pointer to FluidSim object
+
+    // GUI elements
+    sf::Text text, text2, text3;
+    sf::RectangleShape loadModelButton, resetButton;
+    sf::Text loadModelText, resetText;
+
+    sf::RectangleShape previousModelButton, nextModelButton;
+    sf::Text previousModelText, nextModelText;
+    sf::Text modelTitleText;
+
+    sf::Text selectedModelText;
+
+    sf::Font font;
+
+    sf::Vector2f dragBeginPosition;
+
+    sf::Image loadedImage;
+
+    // Button positions
+    sf::Vector2f loadModelButtonPosition;
+    sf::Vector2f resetButtonPosition;
+    sf::Vector2f previousModelButtonPosition;
+    sf::Vector2f nextModelButtonPosition;
+
+    sf::Vector2f dragStartOffset;
 
 
-//CXXDROID is an andriod app that allows me to run the fluid
-//sim in realtime on my phone
-#ifndef CXXDROID_COMPAT
-#include <windows.h>
+    sf::Vector2f lastMousePosition;
+
+    sf::Clock mouseSpeedClock;
+
+    bool isDragging = false;
+
+    // Built-in model tracking
+    int selectedModelIndex;
+    std::string modelNames[3] = { "Circle", "Square", "Airfoil High AA" };
+};
+#include "GUI.hpp"
+#include <iostream>
+#include "Helvetica.hpp"
 #include "ModelLoading.hpp"
-#endif
+#include "Airfoil_AA_30_Degrees.hpp"
 
 
+GUI::GUI(FluidSim* fluidSim, int windowWidth, int windowHeight, int maxFps) {
+    this->fluidSim = fluidSim;
+    selectedModelIndex = 0;  // Start with the first model
+
+    // Load font from memory
+    if (!font.loadFromMemory(helveticaFontBytes, 714756)) {
+        std::cerr << "Error loading font" << std::endl;
+    }
+
+    // Initialize texts
+    text.setFont(font);
+    text.setCharacterSize(18);
+    text.setFillColor(sf::Color::White);
+    text.setPosition(5, 5);
+
+    text2.setFont(font);
+    text2.setCharacterSize(18);
+    text2.setFillColor(sf::Color::White);
+    text2.setPosition(320, 5);
+
+    text3.setFont(font);
+    text3.setCharacterSize(22);
+    text3.setFillColor(sf::Color::White);
+    text3.setPosition(1200, 5);
+
+    // Initialize buttons
+    loadModelButtonPosition = sf::Vector2f(windowWidth - 100, 50);
+    loadModelButton.setSize(sf::Vector2f(150, 40));
+    loadModelButton.setFillColor(sf::Color(70, 70, 70));
+    loadModelButton.setOrigin(loadModelButton.getLocalBounds().width / 2, loadModelButton.getLocalBounds().height / 2);
+    loadModelButton.setPosition(loadModelButtonPosition);
+
+    loadModelText.setFont(font);
+    loadModelText.setCharacterSize(24);
+    loadModelText.setFillColor(sf::Color::White);
+    loadModelText.setString("Load PNG");
+    loadModelText.setOrigin(loadModelText.getLocalBounds().width / 2, loadModelText.getLocalBounds().height / 2 + 5);
+    loadModelText.setPosition(loadModelButtonPosition);
+
+    resetButtonPosition = sf::Vector2f(windowWidth - 100, 100);
+    resetButton.setSize(sf::Vector2f(150, 40));
+    resetButton.setFillColor(sf::Color(70, 70, 70));
+    resetButton.setOrigin(resetButton.getLocalBounds().width / 2, resetButton.getLocalBounds().height / 2);
+    resetButton.setPosition(resetButtonPosition);
+
+    resetText.setFont(font);
+    resetText.setCharacterSize(24);
+    resetText.setFillColor(sf::Color::White);
+    resetText.setString("Reset Dye");
+    resetText.setOrigin(resetText.getLocalBounds().width / 2, resetText.getLocalBounds().height / 2 + 5);
+    resetText.setPosition(resetButtonPosition);
+
+    // Initialize model title and buttons
+    modelTitleText.setFont(font);
+    modelTitleText.setCharacterSize(18);
+    modelTitleText.setFillColor(sf::Color::White);
+    modelTitleText.setString("Built-in Models:");
+    modelTitleText.setPosition(windowWidth - 160, 150);  // Title position
+
+    selectedModelText.setFont(font);
+    selectedModelText.setCharacterSize(18);
+    selectedModelText.setFillColor(sf::Color(245, 81, 81));
+    selectedModelText.setString(modelNames[selectedModelIndex]);
+    selectedModelText.setPosition(windowWidth - 100, 178);  // Selected model position
+    //center
+    selectedModelText.setOrigin(selectedModelText.getLocalBounds().width / 2, selectedModelText.getLocalBounds().height / 2);
 
 
-int main()
-{
-	SimParameters simParams;
-	DisplayParameters displayParams;
+    previousModelButtonPosition = sf::Vector2f(windowWidth - 180, 200);
+    previousModelButton.setSize(sf::Vector2f(70, 50));
+    previousModelButton.setFillColor(sf::Color(70, 70, 70));
+    previousModelButton.setPosition(previousModelButtonPosition);
 
-	size_t fixedHeight = 1200;
-	simParams.SetGridSize(600, 400);
-	simParams.numIterations = 200;
-	
-	
-	//if CXXDROID_COMPAT is defined
-#ifdef CXXDROID_COMPAT
-	simParams.SetGridSize(330, 150);
-	simParams.numIterations = 100;
-	fixedHeight = 1080;
-#endif
+    previousModelText.setFont(font);
+    previousModelText.setCharacterSize(24);
+    previousModelText.setFillColor(sf::Color::White);
+    previousModelText.setString("<");
+    previousModelText.setOrigin(previousModelText.getLocalBounds().width / 2, previousModelText.getLocalBounds().height / 2);
+    previousModelText.setPosition(previousModelButtonPosition.x + 32, previousModelButtonPosition.y + 12);
 
-	displayParams.windowWidth = fixedHeight * (float)simParams.n_x / (float)simParams.n_y;;
-	displayParams.windowHeight = fixedHeight;
-	displayParams.maxFps = 60;
+    nextModelButtonPosition = sf::Vector2f(windowWidth - 90, 200);
+    nextModelButton.setSize(sf::Vector2f(70, 50));
+    nextModelButton.setFillColor(sf::Color(70, 70, 70));
+    nextModelButton.setPosition(nextModelButtonPosition);
 
-	simParams.windTunnelSpeed = 2.f;
-	
-	simParams.overRelaxation = 1.9;
-	
-	sf::RenderWindow window(sf::VideoMode(displayParams.windowWidth, displayParams.windowHeight), "Euler Fluid Simulation");
-	window.setFramerateLimit(displayParams.maxFps);
-	
-	debugDrawWindow = &window;
+    nextModelText.setFont(font);
+    nextModelText.setCharacterSize(24);
+    nextModelText.setFillColor(sf::Color::White);
+    nextModelText.setString(">");
+    nextModelText.setOrigin(nextModelText.getLocalBounds().width / 2, nextModelText.getLocalBounds().height / 2);
+    nextModelText.setPosition(nextModelButtonPosition.x + 32, nextModelButtonPosition.y + 12);
+}
 
-	FluidSim fluidSim = FluidSim(simParams, displayParams);
-
-	
-
-	
-	
-	//Obstacle obs = Obstacle(0.6, 0.5, 0.12);
-
+void GUI::update(sf::RenderWindow& window, const sf::Vector2f& pointerPosition, bool leftMouseClickedThisFrame, bool mouseUnclickedThisFrame) {
+    // Handle load model button interaction (same as before)
+    if (pointerPosition.x > loadModelButtonPosition.x - 75 && pointerPosition.x < loadModelButtonPosition.x + 75 &&
+        pointerPosition.y > loadModelButtonPosition.y - 20 && pointerPosition.y < loadModelButtonPosition.y + 20) {
+        loadModelButton.setFillColor(sf::Color(100, 100, 100));
+        if (leftMouseClickedThisFrame) {
 #ifndef CXXDROID_COMPAT
-	Obstacle obs = Obstacle(0.30, 0.48, 0.13, 0.13);
+            sf::Image img = LoadImageThroughDialog();
+
 #endif
-	
-	//mobile scene uses bigger obstacle for better visibility
 #ifdef CXXDROID_COMPAT
-	Obstacle obs = Obstacle(0.6, 0.48, 0.06, 0.24);
+            sf::Image img;
 #endif
+            if (img.getSize().x > 0) {
+                Obstacle obs(img, 0.7, 0.5, 0.7);
+                fluidSim->simParams.obstacles.clear();
+                fluidSim->simParams.obstacles.push_back(obs);
+                fluidSim->UpdateSField();
+                fluidSim->SetupWindTunnelBoundaries();
+            }
+        }
+    }
+    else {
+        loadModelButton.setFillColor(sf::Color(70, 70, 70));
+    }
 
-	
-	fluidSim.simParams.obstacles.push_back(obs);
-	fluidSim.UpdateSField();
+    // Handle reset button interaction (same as before)
+    if (pointerPosition.x > resetButtonPosition.x - 75 && pointerPosition.x < resetButtonPosition.x + 75 &&
+        pointerPosition.y > resetButtonPosition.y - 20 && pointerPosition.y < resetButtonPosition.y + 20) {
+        resetButton.setFillColor(sf::Color(100, 100, 100));
+        if (leftMouseClickedThisFrame) {
+            std::fill(fluidSim->mField, fluidSim->mField + fluidSim->simParams.n_cells, 1.0f);
+            fluidSim->UpdateSField();
+            fluidSim->SetupWindTunnelBoundaries();
+        }
+    }
+    else {
+        resetButton.setFillColor(sf::Color(70, 70, 70));
+    }
+
+    // Handle previous model button interaction
+    if (pointerPosition.x > previousModelButtonPosition.x && pointerPosition.x < previousModelButtonPosition.x + 70 &&
+        pointerPosition.y > previousModelButtonPosition.y && pointerPosition.y < previousModelButtonPosition.y + 50) {
+        previousModelButton.setFillColor(sf::Color(100, 100, 100));
+        if (leftMouseClickedThisFrame) {
+            selectedModelIndex = (selectedModelIndex - 1 + 3) % 3;  // Cycle backwards
+            std::cout << "Selected model: " << modelNames[selectedModelIndex] << std::endl;
+            LoadBuiltInModel(selectedModelIndex);
+            selectedModelText.setString(modelNames[selectedModelIndex]);
+            selectedModelText.setOrigin(selectedModelText.getLocalBounds().width / 2, selectedModelText.getLocalBounds().height / 2);
+
+        }
+    }
+    else {
+        previousModelButton.setFillColor(sf::Color(70, 70, 70));
+    }
+
+    // Handle next model button interaction
+    if (pointerPosition.x > nextModelButtonPosition.x && pointerPosition.x < nextModelButtonPosition.x + 70 &&
+        pointerPosition.y > nextModelButtonPosition.y && pointerPosition.y < nextModelButtonPosition.y + 50) {
+        nextModelButton.setFillColor(sf::Color(100, 100, 100));
+        if (leftMouseClickedThisFrame) {
+            selectedModelIndex = (selectedModelIndex + 1) % 3;  // Cycle forwards
+            std::cout << "Selected model: " << modelNames[selectedModelIndex] << std::endl;
+            LoadBuiltInModel(selectedModelIndex);
+            selectedModelText.setString( modelNames[selectedModelIndex]);
+            selectedModelText.setOrigin(selectedModelText.getLocalBounds().width / 2, selectedModelText.getLocalBounds().height / 2);
+        }
+    }
+    else {
+        nextModelButton.setFillColor(sf::Color(70, 70, 70));
+    }
+
+
+    sf::Vector2f simSpaceMousePosition = sf::Vector2f((float)pointerPosition.x / window.getSize().y, (float)pointerPosition.y / window.getSize().y);
+
+    sf::Vector2f mouseVelocity = simSpaceMousePosition - lastMousePosition;
+
+    float lastMouseUpdateTime = mouseSpeedClock.getElapsedTime().asSeconds();
+
+    mouseVelocity = mouseVelocity / lastMouseUpdateTime * 0.001f;
 
 
 
 
 
+    bool mouseOverBoundary = fluidSim->PositionIsBoundary(simSpaceMousePosition.x, simSpaceMousePosition.y);
 
-	
 
-	float dyeLineSpacing = 1.f / (float)simParams.n_y;
-	//add dye sources every 0.04
-	for (size_t i = 0; i < simParams.n_y; i++) {
-		if (i % 10 == 0) {
-			fluidSim.AddDyeSource(0.01, 0.05 + i * dyeLineSpacing, 0.02, 0.001, 0);
-		}
+    if (leftMouseClickedThisFrame && mouseOverBoundary)
+    {
+        isDragging = true;
+        dragStartOffset = simSpaceMousePosition - sf::Vector2f(fluidSim->simParams.obstacles[0].x, fluidSim->simParams.obstacles[0].y);
+
+    }
+
+    if (mouseUnclickedThisFrame)
+    {
+        isDragging = false;
+
+    }
+
+
+    if (isDragging)
+    {
+        fluidSim->simParams.mouseVelocity = mouseVelocity;
+    }
+    else
+    {
+		fluidSim->simParams.mouseVelocity = sf::Vector2f(0, 0);
 	}
 
-	
-	
-	//create text object for drawing cell values
-	
-	sf::Font font;
-	if (!font.loadFromFile("C:\\Users\\aspen\\Desktop\\SFMLFonts\\Helvetica.ttf"))
-	{
-		std::cout << "Error loading font" << std::endl;
+    //if dragging, update the obstacle position and initiate refresh of the simulation
+    if (isDragging)
+    {
+		fluidSim->simParams.obstacles[0].x = simSpaceMousePosition.x - dragStartOffset.x;
+		fluidSim->simParams.obstacles[0].y = simSpaceMousePosition.y - dragStartOffset.y;
+		fluidSim->UpdateSField();
+		fluidSim->SetupWindTunnelBoundaries();
+       
 	}
 
-	debugDrawFont.loadFromFile("C:\\Users\\aspen\\Desktop\\SFMLFonts\\Helvetica.ttf");
-
-	sf::Text text;
-	text.setFont(font);
-	text.setCharacterSize(18);
-	text.setFillColor(sf::Color::White);
-	text.setPosition(5, 5);
-
-	sf::Text text2;
-	text2.setFont(font);
-	text2.setCharacterSize(18);
-	text2.setFillColor(sf::Color::White);
-	text2.setPosition(320, 5);
+    lastMousePosition = pointerPosition;
+    mouseSpeedClock.restart();
 
 
-	sf::Text text3;
-	text3.setFont(font);
-	text3.setCharacterSize(22);
-	text3.setFillColor(sf::Color::White);
-	text3.setPosition(1200, 5);
-	
+}
 
-	sf::Vector2f loadModelButtonPosition(displayParams.windowWidth - 100, 50);
+void GUI::draw(sf::RenderWindow& window) {
+    // Draw elements
+    window.draw(text);
+    window.draw(text2);
+    window.draw(text3);
+    window.draw(loadModelButton);
+    window.draw(loadModelText);
+    window.draw(resetButton);
+    window.draw(resetText);
+    window.draw( selectedModelText);
 
-	sf::RectangleShape loadModelButton(sf::Vector2f(150, 40));
-	loadModelButton.setFillColor(sf::Color(70, 70, 70));
-	//center origin
-	loadModelButton.setOrigin(loadModelButton.getLocalBounds().width / 2, loadModelButton.getLocalBounds().height / 2);
-
-	loadModelButton.setPosition(loadModelButtonPosition);
-
-
-	sf::Text loadModelText;
-	loadModelText.setFont(font);
-	loadModelText.setCharacterSize(24);
-	loadModelText.setFillColor(sf::Color::White);
-	loadModelText.setString("Load Model");
-	//center the text
-	loadModelText.setOrigin(loadModelText.getLocalBounds().width / 2, loadModelText.getLocalBounds().height / 2 + 5);
-	loadModelText.setPosition(loadModelButtonPosition.x, loadModelButtonPosition.y);
-
-
-	
-	sf::Vector2f resetButtonPosition(displayParams.windowWidth - 100, 100);
-	
-	sf::RectangleShape resetButton(sf::Vector2f(150, 40));
-	resetButton.setFillColor(sf::Color(70, 70, 70));
-	//center origin
-	resetButton.setOrigin(resetButton.getLocalBounds().width / 2, resetButton.getLocalBounds().height / 2);
-	
-	resetButton.setPosition(resetButtonPosition);
-	
-	sf::Text resetText;
-	resetText.setFont(font);
-	resetText.setCharacterSize(24);
-	resetText.setFillColor(sf::Color::White);
-	resetText.setString("Reset Dye");
-	//center the text
-	resetText.setOrigin(resetText.getLocalBounds().width / 2, resetText.getLocalBounds().height / 2 + 5);
-	resetText.setPosition(resetButtonPosition.x, resetButtonPosition.y);
-	
-	
-
-	
+    // Draw built-in models title and buttons
+    window.draw(modelTitleText);
+    window.draw(previousModelButton);
+    window.draw(previousModelText);
+    window.draw(nextModelButton);
+    window.draw(nextModelText);
+}
 
 
 
-	sf::Clock frameClock;
-	sf::Clock simClock;
-	sf::Clock renderClock;
-	float lastTime = 0;
-
-	while (window.isOpen())
-	{
-		
-		bool leftMouseClickedThisFrame = false;
-		sf::Event event;
-		while (window.pollEvent(event))
-		{
-			if (event.type == sf::Event::Closed)
-				window.close();
-
-			//if esc key is pressed, close the window
-			if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
-				window.close();
-
-			//if left mouse button is clicked, set leftMouseClickedThisFrame to true
-			if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
-				leftMouseClickedThisFrame = true;
-		}
-
-		//clear the window
-		window.clear();
+void GUI::updateText(float fps, float simTime, float renderTime, float currentTime) {
+    // Update the text strings
+    text.setString("GRID: " + std::to_string(fluidSim->simParams.n_x) + "x" + std::to_string(fluidSim->simParams.n_y) + ", FPS: " + std::to_string(fps));
+    text2.setString("Fluid Sim Time: " + std::to_string(simTime / 1000.f) + "ms, Fluid Render Time: " + std::to_string(renderTime / 1000.f) + "ms" + ", Frame Time: " + std::to_string(currentTime * 1000) + "ms");
+    text3.setString("Avg Divergence: " + std::to_string(fluidSim->simStats.avgVelocityFieldDivergence) + ", Max Divergence: " + std::to_string(fluidSim->simStats.maxVelocityFieldDivergence));
+}
 
 
-
-
-		
-		float currentTime = frameClock.restart().asSeconds();
-		
-		float fps = 1.f / (currentTime);
-		lastTime = currentTime;
-		
-		//set text string to GRID: 200x200, FPS: 60 for example
-		text.setString("GRID: " + std::to_string(simParams.n_x) + "x" + std::to_string(simParams.n_y) + ", FPS: " + std::to_string(fps));
-	
-		
-		
-				
-		simClock.restart();
-		
-		fluidSim.Simulate(0.005f);
-		float simTime = simClock.restart().asMicroseconds();
-
-	
-		renderClock.restart();
-		fluidSim.Render(window);
-		float renderTime = renderClock.restart().asMicroseconds();
-
-		
-		
-		//set text
-		text2.setString("Fluid Sim Time: " + std::to_string(simTime/1000.f) + "ms, Fluid Render Time: " + std::to_string(renderTime/1000.f) + "ms" + ", Frame Time: " + std::to_string(currentTime*1000) + "ms");
-		
-		//fluidSim.simStats.maxVelocityFieldDivergence
-		text3.setString("Avg Divergence: " + std::to_string(fluidSim.simStats.avgVelocityFieldDivergence) + ", Max Divergence: " + std::to_string(fluidSim.simStats.maxVelocityFieldDivergence));
-
-		window.draw(text);
-		window.draw(text2);
-		window.draw(text3);
-
-
-		//draw the load model button
-		window.draw(loadModelButton);
-		window.draw(loadModelText);
-
-		//draw the reset button
-		window.draw(resetButton);
-		window.draw(resetText);
-
-		//if the mouse is over the button, change the color
-		if (sf::Mouse::getPosition(window).x > loadModelButtonPosition.x - 75 && sf::Mouse::getPosition(window).x < loadModelButtonPosition.x + 75 &&
-			sf::Mouse::getPosition(window).y > loadModelButtonPosition.y - 20 && sf::Mouse::getPosition(window).y < loadModelButtonPosition.y + 20) {
-			loadModelButton.setFillColor(sf::Color(100, 100, 100));
-
-			//if clicked, load the model
-			if (leftMouseClickedThisFrame) {
-
-				#ifndef CXXDROID_COMPAT
-				sf::Image img = LoadImageThroughDialog();
-
-				#endif
-
-				#ifdef CXXDROID_COMPAT
-				sf::Image img;
-
-				#endif
-
-				//check if img is valid
-				if (img.getSize().x > 0) {
-					Obstacle obs(img, 0.7, 0.5, 0.7);
-					
-					fluidSim.simParams.obstacles.clear();
-					fluidSim.simParams.obstacles.push_back(obs);
-
-
-					fluidSim.UpdateSField();
-					fluidSim.SetupWindTunnelBoundaries();
-					
-				}
-				
-
-			}
-
-			
-
-			
-			
-		}
-		else {
-			loadModelButton.setFillColor(sf::Color(70, 70, 70));
-		}
-
-
-		//if the mouse is over the button, change the color
-		if (sf::Mouse::getPosition(window).x > resetButtonPosition.x - 75 && sf::Mouse::getPosition(window).x < resetButtonPosition.x + 75 &&
-			sf::Mouse::getPosition(window).y > resetButtonPosition.y - 20 && sf::Mouse::getPosition(window).y < resetButtonPosition.y + 20) {
-			resetButton.setFillColor(sf::Color(100, 100, 100));
-
-			//if clicked, reset the simulation
-			if (leftMouseClickedThisFrame) {
-				//fluidSim.Reset();
-
-				std::fill(fluidSim.mField, fluidSim.mField + simParams.n_cells, 1.0f);
-
-				//fluidSim.SetupWindTunnelBoundaries(4);
-
-				fluidSim.UpdateSField();
-				fluidSim.SetupWindTunnelBoundaries();
-
-
-				//fluidSim.SetObstacle(0.25, 0.5, 0.08);
-
-				//fluidSim.SetObstacle(0.60, 0.5, 0.08);
-			}
-		}
-		else {
-			resetButton.setFillColor(sf::Color(70, 70, 70));
-		}
-
-		
-		//save the currnet image to up 2 folders and into "images"
-		//image.saveToFile("C:\\Users\\aspen\\Desktop\\Euler-Fluid-Simulation\\Images\\image" + std::to_string(displayParams.frameCount) + ".png");
-
-		displayParams.frameCount += 1;
-
-
-		//draw the window
-		window.display();
-		
-
-
-
+void GUI::LoadBuiltInModel(int index)
+{
+    //if name is circle
+    if (modelNames[index] == "Circle")
+    {
+		Obstacle obs(0.5, 0.5, 0.14);
+		fluidSim->simParams.obstacles.clear();
+		fluidSim->simParams.obstacles.push_back(obs);
+		fluidSim->UpdateSField();
+		fluidSim->SetupWindTunnelBoundaries();
 	}
+
+    //if name is square
+    if (modelNames[index] == "Square")
+    {
+		Obstacle obs(0.5, 0.5, 0.2, 0.2);
+		fluidSim->simParams.obstacles.clear();
+		fluidSim->simParams.obstacles.push_back(obs);
+		fluidSim->UpdateSField();
+		fluidSim->SetupWindTunnelBoundaries();
+	}
+
+	//if name is airfoil
+    if (modelNames[index] == "Airfoil High AA")
+    {
+
+        loadedImage.loadFromMemory(airfoil_aa_30_degrees, 118227);
+
+        Obstacle obs(loadedImage, 0.8, 0.5, 0.8);
+        
+        fluidSim->simParams.obstacles.clear();
+		fluidSim->simParams.obstacles.push_back(obs);
+		fluidSim->UpdateSField();
+		fluidSim->SetupWindTunnelBoundaries();
+	}
+
 
 
 

@@ -1,9 +1,11 @@
 #include "GUI.hpp"
 #include <iostream>
 #include "Helvetica.hpp"
-#include "ModelLoading.hpp"
 #include "Airfoil_AA_30_Degrees.hpp"
 
+#ifndef CXXDROID_COMPAT
+#include "ModelLoading.hpp"
+#endif
 
 GUI::GUI(FluidSim* fluidSim, int windowWidth, int windowHeight, int maxFps) {
     this->fluidSim = fluidSim;
@@ -178,7 +180,7 @@ void GUI::update(sf::RenderWindow& window, const sf::Vector2f& pointerPosition, 
 
     float lastMouseUpdateTime = mouseSpeedClock.getElapsedTime().asSeconds();
 
-    mouseVelocity = mouseVelocity / lastMouseUpdateTime * 0.00001f;
+    mouseVelocity = mouseVelocity / lastMouseUpdateTime * 0.0f;
 
 
 
