@@ -13,8 +13,8 @@ int main() {
     DisplayParameters displayParams;
 
     size_t fixedHeight = 800;
-    simParams.SetGridSize(300, 200);
-    simParams.numIterations = 200;
+    simParams.SetGridSize(400, 200);
+    simParams.numIterations = 100;
 
 #ifdef CXXDROID_COMPAT
     simParams.SetGridSize(220, 100);
@@ -24,7 +24,7 @@ int main() {
 
     displayParams.windowWidth = (size_t)(fixedHeight * (float)simParams.n_x / (float)simParams.n_y);
     displayParams.windowHeight = fixedHeight;
-    displayParams.maxFps = 60;
+    displayParams.maxFps = 120;
 
     simParams.windTunnelSpeed = 2.f;
     simParams.overRelaxation = 1.9f;
@@ -35,13 +35,6 @@ int main() {
 
     debugDrawWindow = &window;
     FluidSim fluidSim(simParams, displayParams);
-    //Obstacle obs(0.30, 0.48, 0.13, 0.13);
-
-    //fluidSim.displayParams.displayMode = DisplayParameters::DisplayMode::DYE;
-    //fluidSim.displayParams.displayMode = DisplayParameters::DisplayMode::PRESSURE;
-    //fluidSim.displayParams.displayMode = DisplayParameters::DisplayMode::VELOCITIES;
-    fluidSim.displayParams.displayMode = DisplayParameters::DisplayMode::VORTICITY;
-
 
     // Adding dye sources
     float dyeLineSpacing = 1.f / (float)simParams.n_y;

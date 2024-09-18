@@ -189,10 +189,10 @@ public:
 	size_t frameCount = 0;
 	
 	enum class DisplayMode {
+		DYE,
 		VELOCITIES,
 		PRESSURE,
-		VORTICITY,
-		DYE
+		VORTICITY
 	};
 
 	DisplayMode displayMode = DisplayMode::DYE;

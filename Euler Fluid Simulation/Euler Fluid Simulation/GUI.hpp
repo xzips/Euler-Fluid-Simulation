@@ -58,4 +58,14 @@ private:
 
 
     std::string modelNames[3] = { "Circle", "Square", "Airfoil High AA" };
+
+        // Visualization selector GUI elements
+    sf::RectangleShape previousVisualizationButton, nextVisualizationButton;
+    sf::Text previousVisualizationText, nextVisualizationText;
+    sf::Text visualizationTitleText, selectedVisualizationText;
+
+    // Visualization tracking
+    int selectedVisualizationIndex = 0;
+    std::string visualizationNames[4] = { "Dye", "Velocities", "Pressure", "Vorticity" };
+
 };

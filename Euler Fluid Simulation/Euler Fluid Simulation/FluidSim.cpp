@@ -1252,33 +1252,48 @@ void FluidSim::SetObstacle(float x, float y, float r) {
 
 void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 {
+	size_t n_x = fluidSim->simParams.n_x;
+	size_t n_y = fluidSim->simParams.n_y;
+
+	// Simulation grid dimensions
+	float simGridWidth = static_cast<float>(n_x);
+	float simGridHeight = static_cast<float>(n_y);
+
+	// Aspect ratio of the grid
+	float aspectRatio = simGridWidth / simGridHeight;
+
 	if (type == ObstacleType::CIRCLE)
 	{
-		float vx = 0.0;
-		float vy = 0.0;
+		float vx = 0.0f;
+		float vy = 0.0f;
 
-		size_t n = fluidSim->simParams.n_y;
-		float cd = sqrt(2.f) * fluidSim->simParams.gridSpacingX;
+		// Adjust obstacle position for aspect ratio
+		float xposInGrid = x * simGridWidth / aspectRatio;
+		float yposInGrid = y * simGridHeight;
 
-		for (size_t i = 1; i < fluidSim->simParams.n_x - 2; i++) {
-			for (size_t j = 1; j < fluidSim->simParams.n_y - 2; j++) {
+		// Scale radius to grid units
+		float radiusInGrid = radius * simGridHeight;  // Assuming radius is normalized [0,1]
 
-				//sField[i * n + j] = 1.0;
+		for (size_t i = 1; i < n_x - 2; i++) {
+			for (size_t j = 1; j < n_y - 2; j++) {
 
-				float dx = (i + 0.5f) * fluidSim->simParams.gridSpacingY - x;
-				float dy = (j + 0.5f) * fluidSim->simParams.gridSpacingY - y;
+				// Compute the center position of the grid cell
+				float simX = static_cast<float>(i) + 0.5f;
+				float simY = static_cast<float>(j) + 0.5f;
 
-				if (dx * dx + dy * dy < radius * radius) {
-					fluidSim->sField[i * n + j] = 0.0;
+				// Compute the distance from the obstacle center
+				float dx = simX - xposInGrid;
+				float dy = simY - yposInGrid;
 
-					fluidSim->mField[i * n + j] = 1.0;
-					fluidSim->uField[i * n + j] = vx;
-					fluidSim->uField[(i + 1) * n + j] = vx;
-					fluidSim->vField[i * n + j] = vy;
-					fluidSim->vField[i * n + j + 1] = vy;
+				if (dx * dx + dy * dy < radiusInGrid * radiusInGrid) {
+					size_t idx = i * n_y + j;
+					fluidSim->sField[idx] = 0.0f;
 
-					//std::cout << "i: " << i << " j: " << j << std::endl;
-
+					fluidSim->mField[idx] = 1.0f;
+					fluidSim->uField[idx] = vx;
+					fluidSim->uField[(i + 1) * n_y + j] = vx;
+					fluidSim->vField[idx] = vy;
+					fluidSim->vField[i * n_y + j + 1] = vy;
 				}
 			}
 		}
@@ -1286,46 +1301,55 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 
 	if (type == ObstacleType::SQUARE)
 	{
-		float vx = 0.0;
-		float vy = 0.0;
+		float vx = 0.0f;
+		float vy = 0.0f;
 
-		size_t n = fluidSim->simParams.n_y;
-		float cd = sqrt(2.f) * fluidSim->simParams.gridSpacingX;
+		// Adjust obstacle position for aspect ratio
+		float xposInGrid = x * simGridWidth / aspectRatio;
+		float yposInGrid = y * simGridHeight;
 
-		for (size_t i = 1; i < fluidSim->simParams.n_x - 2; i++) {
-			for (size_t j = 1; j < fluidSim->simParams.n_y - 2; j++) {
+		// Scale width and height to grid units
+		float widthInGrid = width * simGridWidth / aspectRatio; // Assuming width is normalized [0,1]
+		float heightInGrid = height * simGridHeight;
 
-				//sField[i * n + j] = 1.0;
+		// Compute half-dimensions for convenience
+		float halfWidth = widthInGrid / 2.0f;
+		float halfHeight = heightInGrid / 2.0f;
 
-				float dx = (i + 0.5f) * fluidSim->simParams.gridSpacingY - x;
-				float dy = (j + 0.5f) * fluidSim->simParams.gridSpacingY - y;
+		for (size_t i = 1; i < n_x - 2; i++) {
+			for (size_t j = 1; j < n_y - 2; j++) {
 
-				if (dx > -width / 2 && dx < width / 2 && dy > -height / 2 && dy < height / 2) {
-					fluidSim->sField[i * n + j] = 0.0f;
+				// Compute the center position of the grid cell
+				float simX = static_cast<float>(i) + 0.5f;
+				float simY = static_cast<float>(j) + 0.5f;
 
-					fluidSim->mField[i * n + j] = 1.0f;
+				// Compute the distance from the obstacle center
+				float dx = simX - xposInGrid;
+				float dy = simY - yposInGrid;
 
-					//if we are on the boundary set u and v to vx and vy
-					if (dx == -width / 2 || dx == width / 2 || dy == -height / 2 || dy == height / 2)
+				// Check if the point is within the square bounds
+				if (dx > -halfWidth && dx < halfWidth && dy > -halfHeight && dy < halfHeight) {
+					size_t idx = i * n_y + j;
+					fluidSim->sField[idx] = 0.0f;
+					fluidSim->mField[idx] = 1.0f;
+
+					// Set velocities at the boundary
+					if (fabs(dx) == halfWidth || fabs(dy) == halfHeight)
 					{
-						fluidSim->uField[i * n + j] = fluidSim->simParams.mouseVelocity.x;
-						fluidSim->uField[(i + 1) * n + j] = fluidSim->simParams.mouseVelocity.x;
-						fluidSim->vField[i * n + j] = fluidSim->simParams.mouseVelocity.y;
-						fluidSim->vField[i * n + j + 1] = fluidSim->simParams.mouseVelocity.y;
+						fluidSim->uField[idx] = fluidSim->simParams.mouseVelocity.x;
+						fluidSim->uField[(i + 1) * n_y + j] = fluidSim->simParams.mouseVelocity.x;
+						fluidSim->vField[idx] = fluidSim->simParams.mouseVelocity.y;
+						fluidSim->vField[i * n_y + j + 1] = fluidSim->simParams.mouseVelocity.y;
 					}
 					else {
-						fluidSim->uField[i * n + j] = 0.0;
-						fluidSim->uField[(i + 1) * n + j] = 0.0;
-						fluidSim->vField[i * n + j] = 0.0;
-						fluidSim->vField[i * n + j + 1] = 0.0;
+						fluidSim->uField[idx] = vx;
+						fluidSim->uField[(i + 1) * n_y + j] = vx;
+						fluidSim->vField[idx] = vy;
+						fluidSim->vField[i * n_y + j + 1] = vy;
 					}
-
-					//std::cout << "i: " << i << " j: " << j << std::endl;
-
 				}
 			}
 		}
-		
 	}
 
 
@@ -1413,7 +1437,7 @@ void FluidSim::UpdateSField()
 	std::fill(sField, sField + simParams.n_cells, 1.0f);
 
 	
-	for (auto obstacle : simParams.obstacles)
+	for (auto &obstacle : simParams.obstacles)
 	{
 		obstacle.SetObstacleSField(this);
 	}

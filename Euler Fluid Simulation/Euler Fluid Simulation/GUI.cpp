@@ -105,6 +105,47 @@ GUI::GUI(FluidSim* fluidSim, int windowWidth, int windowHeight, int maxFps) {
     nextModelText.setString(">");
     nextModelText.setOrigin(nextModelText.getLocalBounds().width / 2, nextModelText.getLocalBounds().height / 2);
     nextModelText.setPosition(nextModelButtonPosition.x + 32, nextModelButtonPosition.y + 12);
+
+
+
+
+    // Initialize visualization title and buttons
+    visualizationTitleText.setFont(font);
+    visualizationTitleText.setCharacterSize(18);
+    visualizationTitleText.setFillColor(sf::Color::White);
+    visualizationTitleText.setString("Visualization:");
+    visualizationTitleText.setPosition((float)(windowWidth - 160), (float)300);  // Title position
+
+    selectedVisualizationText.setFont(font);
+    selectedVisualizationText.setCharacterSize(18);
+    selectedVisualizationText.setFillColor(sf::Color(245, 81, 81));
+    selectedVisualizationText.setString(visualizationNames[selectedVisualizationIndex]);
+    selectedVisualizationText.setPosition((float)(windowWidth - 100), (float)328);  // Selected visualization position
+    selectedVisualizationText.setOrigin(selectedVisualizationText.getLocalBounds().width / 2, selectedVisualizationText.getLocalBounds().height / 2);
+
+    previousVisualizationButton.setSize(sf::Vector2f(70, 50));
+    previousVisualizationButton.setFillColor(sf::Color(70, 70, 70));
+    previousVisualizationButton.setPosition((float)(windowWidth - 180), 350.f);
+
+    previousVisualizationText.setFont(font);
+    previousVisualizationText.setCharacterSize(24);
+    previousVisualizationText.setFillColor(sf::Color::White);
+    previousVisualizationText.setString("<");
+    previousVisualizationText.setOrigin(previousVisualizationText.getLocalBounds().width / 2, previousVisualizationText.getLocalBounds().height / 2);
+    previousVisualizationText.setPosition(previousVisualizationButton.getPosition().x + 32, previousVisualizationButton.getPosition().y + 12);
+
+    nextVisualizationButton.setSize(sf::Vector2f(70, 50));
+    nextVisualizationButton.setFillColor(sf::Color(70, 70, 70));
+    nextVisualizationButton.setPosition((float)(windowWidth - 90), 350.f);
+
+    nextVisualizationText.setFont(font);
+    nextVisualizationText.setCharacterSize(24);
+    nextVisualizationText.setFillColor(sf::Color::White);
+    nextVisualizationText.setString(">");
+    nextVisualizationText.setOrigin(nextVisualizationText.getLocalBounds().width / 2, nextVisualizationText.getLocalBounds().height / 2);
+    nextVisualizationText.setPosition(nextVisualizationButton.getPosition().x + 32, nextVisualizationButton.getPosition().y + 12);
+
+    
 }
 
 void GUI::update(sf::RenderWindow& window, const sf::Vector2f& pointerPosition, bool leftMouseClickedThisFrame, bool mouseUnclickedThisFrame) {
@@ -181,6 +222,40 @@ void GUI::update(sf::RenderWindow& window, const sf::Vector2f& pointerPosition, 
     }
 
 
+    // Handle previous visualization button interaction
+    if (pointerPosition.x > previousVisualizationButton.getPosition().x && pointerPosition.x < previousVisualizationButton.getPosition().x + 70 &&
+        pointerPosition.y > previousVisualizationButton.getPosition().y && pointerPosition.y < previousVisualizationButton.getPosition().y + 50) {
+        previousVisualizationButton.setFillColor(sf::Color(100, 100, 100));
+        if (leftMouseClickedThisFrame) {
+            selectedVisualizationIndex = (selectedVisualizationIndex - 1 + 4) % 4;  // Cycle backwards
+            std::cout << "Selected visualization: " << visualizationNames[selectedVisualizationIndex] << std::endl;
+            fluidSim->displayParams.displayMode = static_cast<DisplayParameters::DisplayMode>(selectedVisualizationIndex);
+            selectedVisualizationText.setString(visualizationNames[selectedVisualizationIndex]);
+            selectedVisualizationText.setOrigin(selectedVisualizationText.getLocalBounds().width / 2, selectedVisualizationText.getLocalBounds().height / 2);
+        }
+    }
+    else {
+        previousVisualizationButton.setFillColor(sf::Color(70, 70, 70));
+    }
+
+    // Handle next visualization button interaction
+    if (pointerPosition.x > nextVisualizationButton.getPosition().x && pointerPosition.x < nextVisualizationButton.getPosition().x + 70 &&
+        pointerPosition.y > nextVisualizationButton.getPosition().y && pointerPosition.y < nextVisualizationButton.getPosition().y + 50) {
+        nextVisualizationButton.setFillColor(sf::Color(100, 100, 100));
+        if (leftMouseClickedThisFrame) {
+            selectedVisualizationIndex = (selectedVisualizationIndex + 1) % 4;  // Cycle forwards
+            std::cout << "Selected visualization: " << visualizationNames[selectedVisualizationIndex] << std::endl;
+            fluidSim->displayParams.displayMode = static_cast<DisplayParameters::DisplayMode>(selectedVisualizationIndex);
+            selectedVisualizationText.setString(visualizationNames[selectedVisualizationIndex]);
+            selectedVisualizationText.setOrigin(selectedVisualizationText.getLocalBounds().width / 2, selectedVisualizationText.getLocalBounds().height / 2);
+        }
+    }
+    else {
+        nextVisualizationButton.setFillColor(sf::Color(70, 70, 70));
+    }
+
+
+
     sf::Vector2f simSpaceMousePosition = sf::Vector2f((float)pointerPosition.x / window.getSize().y, (float)pointerPosition.y / window.getSize().y);
 
     sf::Vector2f mouseVelocity = simSpaceMousePosition - lastMousePosition;
@@ -253,6 +328,15 @@ void GUI::draw(sf::RenderWindow& window) {
     window.draw(previousModelText);
     window.draw(nextModelButton);
     window.draw(nextModelText);
+
+    // Draw visualization selector
+    window.draw(visualizationTitleText);
+    window.draw(previousVisualizationButton);
+    window.draw(previousVisualizationText);
+    window.draw(nextVisualizationButton);
+    window.draw(nextVisualizationText);
+    window.draw(selectedVisualizationText);
+
 }
 
 
