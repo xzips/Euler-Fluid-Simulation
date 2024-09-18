@@ -39,7 +39,6 @@ The performance on mobile is degraded a bit since I didn't bother to install Ope
 - Adding more visualization would be nice, such as computed streamlines, pressure, vorticity, and velocity. These are relatively simple to add, but would just take a bit of time get the colors and graphics right.
 - Finally, adding multiple bodies at the same time, or perhaps runtime-editable boundary conditions or fluid sources could be interesting.
 
-- 
 ## Resources
 ### Initial Implementation
 - https://en.wikipedia.org/wiki/Euler_equations_(fluid_dynamics)
