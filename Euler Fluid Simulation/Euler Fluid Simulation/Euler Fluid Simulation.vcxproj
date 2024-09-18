@@ -149,6 +149,7 @@
     <ClInclude Include="FluidSim.hpp" />
     <ClInclude Include="GUI.hpp" />
     <ClInclude Include="ModelLoading.hpp" />
+    <ClInclude Include="SciColorMaps.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

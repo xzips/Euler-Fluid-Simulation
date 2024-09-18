@@ -188,13 +188,23 @@ public:
 	size_t maxFps = 60;
 	size_t frameCount = 0;
 	
+	enum class DisplayMode {
+		VELOCITIES,
+		PRESSURE,
+		VORTICITY,
+		DYE
+	};
+
+	DisplayMode displayMode = DisplayMode::DYE;
 	
-	bool paused = false;
 	bool showObstacle = true;
 	bool showStreamlines = false;
-	bool showVelocities = false;
-	bool showPressure = false;
-	bool showDye= true;
+
+	//velocity, pressure, voritcity, and dye fields should only be shown one at a time
+	//bool showVelocities = false;
+	//bool showPressure = false;
+	//bool showVorticity = false;
+	//bool showDye= true;
 };
 
 

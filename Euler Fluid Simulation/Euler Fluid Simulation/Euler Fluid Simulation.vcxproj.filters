@@ -44,5 +44,8 @@
     <ClInclude Include="Airfoil_AA_30_Degrees.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SciColorMaps.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

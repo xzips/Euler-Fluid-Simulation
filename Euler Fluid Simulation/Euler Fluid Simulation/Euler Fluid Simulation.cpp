@@ -12,9 +12,9 @@ int main() {
     SimParameters simParams;
     DisplayParameters displayParams;
 
-    size_t fixedHeight = 1080;
-    simParams.SetGridSize(444, 250);
-    simParams.numIterations = 140;
+    size_t fixedHeight = 800;
+    simParams.SetGridSize(300, 200);
+    simParams.numIterations = 200;
 
 #ifdef CXXDROID_COMPAT
     simParams.SetGridSize(220, 100);
@@ -28,6 +28,7 @@ int main() {
 
     simParams.windTunnelSpeed = 2.f;
     simParams.overRelaxation = 1.9f;
+    simParams.gravity = 10.f;
 
 	sf::RenderWindow window(sf::VideoMode(displayParams.windowWidth, displayParams.windowHeight), "Euler Fluid Simulation", sf::Style::Close);
     window.setFramerateLimit(displayParams.maxFps);
@@ -36,6 +37,10 @@ int main() {
     FluidSim fluidSim(simParams, displayParams);
     //Obstacle obs(0.30, 0.48, 0.13, 0.13);
 
+    //fluidSim.displayParams.displayMode = DisplayParameters::DisplayMode::DYE;
+    //fluidSim.displayParams.displayMode = DisplayParameters::DisplayMode::PRESSURE;
+    //fluidSim.displayParams.displayMode = DisplayParameters::DisplayMode::VELOCITIES;
+    fluidSim.displayParams.displayMode = DisplayParameters::DisplayMode::VORTICITY;
 
 
     // Adding dye sources

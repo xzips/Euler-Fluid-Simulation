@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-
+#include "SciColorMaps.hpp"
 
 #include <math.h>
 
@@ -114,6 +114,8 @@ void FluidSim::SetupWindTunnelBoundaries()
 
 
 
+
+
 //New, optimized version that takes X 0.36ms instead of 25ms to render a 250x120 grid onto an 800x1600 canvas
 void FluidSim::Render(sf::RenderWindow& window)
 {
@@ -127,7 +129,7 @@ void FluidSim::Render(sf::RenderWindow& window)
 		sprite.setTexture(texture);
 	}
 
-	if (displayParams.showDye)
+	if (displayParams.displayMode == DisplayParameters::DisplayMode::DYE)
 	{
 		float min_M = INFINITY;
 		float max_M = -INFINITY;
@@ -153,8 +155,8 @@ void FluidSim::Render(sf::RenderWindow& window)
 		{
 			for (size_t j = 0; j < simParams.n_y; j++)
 			{
-				
-				
+
+
 				float M_norm = 1 - (mField[i * simParams.n_y + j] - min_M) / (max_M - min_M);
 
 				if (M_norm < 0)
@@ -166,7 +168,7 @@ void FluidSim::Render(sf::RenderWindow& window)
 				color.r = (sf::Uint8)(255 * M_norm);
 				color.g = (sf::Uint8)(255 * M_norm);
 				color.b = (sf::Uint8)(255 * M_norm);
-				
+
 
 				if (sField[i * simParams.n_y + j] == 0)
 				{
@@ -180,6 +182,214 @@ void FluidSim::Render(sf::RenderWindow& window)
 		}
 
 	}
+
+	if (displayParams.displayMode == DisplayParameters::DisplayMode::PRESSURE)
+	{
+		float min_P = INFINITY;
+		float max_P = -INFINITY;
+
+		//find min and max
+		for (size_t i = 1; i < simParams.n_x; i++)
+		{
+			for (size_t j = 1; j < simParams.n_y; j++)
+			{
+				if (pField[i * simParams.n_y + j] < min_P)
+					min_P = pField[i * simParams.n_y + j];
+				if (pField[i * simParams.n_y + j] > max_P)
+					max_P = pField[i * simParams.n_y + j];
+			}
+		}
+
+		std::cout << "Min P: " << min_P << " Max P: " << max_P << std::endl;
+
+		sf::Color color;
+		//for each sim box in the texture, set the color based on the m value
+		for (size_t i = 0; i < simParams.n_x; i++)
+		{
+			for (size_t j = 0; j < simParams.n_y; j++)
+			{
+				float P_norm = (pField[i * simParams.n_y + j] - min_P) / (max_P - min_P);
+
+				if (P_norm < 0)
+					P_norm = 0;
+
+				if (P_norm > 1)
+					P_norm = 1;
+
+				//color.r = (sf::Uint8)(255 * P_norm);
+				//color.g = (sf::Uint8)(255 * P_norm);
+				//color.b = (sf::Uint8)(255 * P_norm);
+
+				//color = SciColorMaps::Viridis(P_norm);
+				//color = SciColorMaps::Blackbody(P_norm);
+				color = SciColorMaps::Fast(P_norm);
+
+				if (sField[i * simParams.n_y + j] == 0)
+				{
+					//color = sf::Color(28, 91, 152, 255);
+				}
+
+				image.setPixel(i, j, color);
+
+
+			}
+
+		}
+	}
+
+	//velocities
+	if (displayParams.displayMode == DisplayParameters::DisplayMode::VELOCITIES)
+	{
+		float min_U = INFINITY;
+		float max_U = -INFINITY;
+
+		float min_V = INFINITY;
+		float max_V = -INFINITY;
+
+		//find min and max
+		for (size_t i = 1; i < simParams.n_x; i++)
+		{
+			for (size_t j = 1; j < simParams.n_y; j++)
+			{
+				if (uField[i * simParams.n_y + j] < min_U)
+					min_U = uField[i * simParams.n_y + j];
+				if (uField[i * simParams.n_y + j] > max_U)
+					max_U = uField[i * simParams.n_y + j];
+
+				if (vField[i * simParams.n_y + j] < min_V)
+					min_V = vField[i * simParams.n_y + j];
+				if (vField[i * simParams.n_y + j] > max_V)
+					max_V = vField[i * simParams.n_y + j];
+			}
+		}
+
+		sf::Color color;
+
+		//for each sim box in the texture, set the color based on the m value
+		for (size_t i = 0; i < simParams.n_x; i++)
+		{
+			for (size_t j = 0; j < simParams.n_y; j++)
+			{
+				float U_norm = (uField[i * simParams.n_y + j] - min_U) / (max_U - min_U);
+				float V_norm = (vField[i * simParams.n_y + j] - min_V) / (max_V - min_V);
+
+				if (U_norm < 0)
+					U_norm = 0;
+
+				if (U_norm > 1)
+					U_norm = 1;
+
+				if (V_norm < 0)
+					V_norm = 0;
+
+				if (V_norm > 1)
+					V_norm = 1;
+
+				color.r = (sf::Uint8)(255 * U_norm);
+				color.g = 0;
+				color.b = (sf::Uint8)(255 * V_norm);
+
+				if (sField[i * simParams.n_y + j] == 0)
+				{
+					//color = sf::Color(28, 91, 152, 255);
+				}
+
+				image.setPixel(i, j, color);
+			}
+		}
+	}
+
+	if (displayParams.displayMode == DisplayParameters::DisplayMode::VORTICITY)
+	{
+		float min_omega = INFINITY;
+		float max_omega = -INFINITY;
+
+		std::vector<float> vorticity(simParams.n_x * simParams.n_y, 0.0f);
+
+		// Compute vorticity using central differences for interior points
+		for (size_t i = 1; i < simParams.n_x - 1; i++)
+		{
+			for (size_t j = 1; j < simParams.n_y - 1; j++)
+			{
+				// Assuming grid spacing dx = dy = 1.0
+				float dv_dx = (vField[(i + 1) * simParams.n_y + j] - vField[(i - 1) * simParams.n_y + j]) * 0.5f;
+				float du_dy = (uField[i * simParams.n_y + (j + 1)] - uField[i * simParams.n_y + (j - 1)]) * 0.5f;
+				float omega = abs(dv_dx - du_dy);
+
+				vorticity[i * simParams.n_y + j] = omega;
+
+				if (omega < min_omega)
+					min_omega = omega;
+				if (omega > max_omega)
+					max_omega = omega;
+			}
+		}
+
+		// Handle boundary points (set to 0)
+		for (size_t i = 0; i < simParams.n_x; i++)
+		{
+			vorticity[i * simParams.n_y + 0] = 0.0f;
+			vorticity[i * simParams.n_y + (simParams.n_y - 1)] = 0.0f;
+		}
+		for (size_t j = 0; j < simParams.n_y; j++)
+		{
+			vorticity[0 * simParams.n_y + j] = 0.0f;
+			vorticity[(simParams.n_x - 1) * simParams.n_y + j] = 0.0f;
+		}
+
+		// As it turns out, vorticity is very noisy, so we smooth it with a bit of averaging
+		for (size_t i = 1; i < simParams.n_x - 1; i++)
+		{
+			for (size_t j = 1; j < simParams.n_y - 1; j++)
+			{
+				float sum = 0.0f;
+				sum += vorticity[i * simParams.n_y + j];
+				sum += vorticity[(i - 1) * simParams.n_y + j];
+				sum += vorticity[(i + 1) * simParams.n_y + j];
+				sum += vorticity[i * simParams.n_y + j - 1];
+				sum += vorticity[i * simParams.n_y + j + 1];
+
+				vorticity[i * simParams.n_y + j] = sum / 5.0f;
+			}
+		}
+
+
+		// Handle cases where min and max are equal to avoid division by zero
+		if (max_omega - min_omega < 1e-6f)
+		{
+			max_omega = min_omega + 1e-6f;
+		}
+
+		sf::Color color;
+
+		// Apply colormap to vorticity values and set pixels
+		for (size_t i = 0; i < simParams.n_x; i++)
+		{
+			for (size_t j = 0; j < simParams.n_y; j++)
+			{
+				float omega = vorticity[i * simParams.n_y + j];
+				// Normalize omega to [0, 1]
+				float omega_norm = (omega - min_omega) / (max_omega - min_omega);
+
+				// Clamp the normalized value
+				omega_norm = std::clamp(omega_norm, 0.0f, 1.0f);
+
+				// Apply a colormap (e.g., Viridis, Blackbody, Fast)
+				color = SciColorMaps::Viridis(omega_norm);
+
+				// Optionally, handle obstacles or specific conditions
+				if (sField[i * simParams.n_y + j] == 0)
+				{
+					// Uncomment and set a specific color if needed
+					// color = sf::Color(28, 91, 152, 255);
+				}
+
+				// Set the pixel color
+				image.setPixel(i, j, color);
+			}
+		}
+	}
+
 
 
 	//update the texture
@@ -206,7 +416,7 @@ void FluidSim::Render(sf::RenderWindow& window)
 
 
 
-void VisualizeField(float*field, size_t n_x, size_t n_y)
+void VisualizeField(float*field, size_t n_x, size_t n_y, float fixed_max = 0, float fixed_min = 0)
 {
 
 
@@ -214,21 +424,35 @@ void VisualizeField(float*field, size_t n_x, size_t n_y)
 	image.create(n_x, n_y, sf::Color::Black);
 	
 
+
 	//get min and max
 	float min = std::numeric_limits<float>::max();
 	float max = std::numeric_limits<float>::min();
 	
-	for (size_t i = 1; i < n_x -1; i++)
+
+	if (fixed_max != 0 && fixed_min != 0)
 	{
-		for (size_t j = 1; j < n_y -1; j++)
-		{
-			float val = field[i * n_y + j];
-			if (val < min)
-				min = val;
-			if (val > max)
-				max = val;
-		}
+		max = fixed_max;
+		min = fixed_min;
 	}
+	else
+
+	{
+		for (size_t i = 1; i < n_x -1; i++)
+		{
+			for (size_t j = 1; j < n_y -1; j++)
+			{
+				float val = field[i * n_y + j];
+				if (val < min)
+					min = val;
+				if (val > max)
+					max = val;
+			}
+		}
+
+
+	}
+
 
 
 	for (size_t i = 0; i < n_x; i++)
@@ -237,6 +461,13 @@ void VisualizeField(float*field, size_t n_x, size_t n_y)
 		{
 			float val = field[i * n_y + j];
 			float normalized = (val - min) / (max - min);
+
+			//clip the field in case it goes out of bounds
+			if (normalized < 0)
+				normalized = 0;
+			if (normalized > 1)
+				normalized = 1;
+
 			sf::Color color = sf::Color((sf::Uint8)(255.f * normalized), 0, (sf::Uint8)(255.f * (1 - normalized)));
 			image.setPixel(i, j, color);
 		}
@@ -481,6 +712,8 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 			float div = uField[(i + 1) * n + j] - uField[idx] +
 				vField[idx + 1] - vField[idx];
 
+			//divField[idx] = div;
+
 			// Compute pressure correction
 			float p = -div * swtmp;
 
@@ -518,6 +751,8 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 			// Compute pressure correction
 			float p = -div * swtmp;
 
+			//divField[idx] = div;
+
 			// Update velocity fields
 			uField[idx] -= sx0Field[idx] * p;
 			uField[(i + 1) * n + j] += sx1Field[idx] * p;
@@ -529,6 +764,10 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 				pField[idx] += cp * p;
 			}
 		}
+
+
+		//plot divergence field
+		//VisualizeField(divField, simParams.n_x, simParams.n_y, 0, 1);
 		
 		
 	}
@@ -901,7 +1140,6 @@ void FluidSim::AdvectDye(float dt) {
 void FluidSim::Simulate(float dt) {
 	ApplyDyeSources();
 
-	//ApplyGravity(dt, simParams.gravity);
 	
 	
 	for (size_t i = 0; i < simParams.n_cells; i++)
@@ -930,6 +1168,7 @@ void FluidSim::Simulate(float dt) {
 	AdvectDye(dt);
 	std::cout << "Time taken to advect dye: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 
+	//ApplyGravity(dt, simParams.gravity);
 }
 
 void FluidSim::ApplyDyeSources()

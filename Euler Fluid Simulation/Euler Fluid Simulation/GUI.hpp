@@ -54,5 +54,8 @@ private:
 
     // Built-in model tracking
     int selectedModelIndex;
+
+
+
     std::string modelNames[3] = { "Circle", "Square", "Airfoil High AA" };
 };
