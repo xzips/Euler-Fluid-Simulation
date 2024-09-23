@@ -198,13 +198,7 @@ public:
 	DisplayMode displayMode = DisplayMode::DYE;
 	
 	bool showObstacle = true;
-	bool showStreamlines = false;
-
-	//velocity, pressure, voritcity, and dye fields should only be shown one at a time
-	//bool showVelocities = false;
-	//bool showPressure = false;
-	//bool showVorticity = false;
-	//bool showDye= true;
+	bool showComputedOutline = false;
 };
 
 
@@ -234,6 +228,8 @@ public:
 
 	void SetupWindTunnelBoundaries();
 
+	void ComputePressureIntegral();
+
 	void SetObstacle(float x, float y, float r);
 
 	bool PositionIsBoundary(float x, float y);
@@ -245,6 +241,17 @@ public:
 	float avgU(size_t i, size_t j);
 	float avgV(size_t i, size_t j);
 	
+
+	//currently unused since its a bit unreliable
+	void ComputeBoundaryNormals();
+
+	std::vector<sf::Vector2f> boundaryNormals;
+	
+
+	sf::Vector2f netPressure;
+	sf::Vector2f centerOfPressure;
+
+
 	SimParameters simParams;
 	DisplayParameters displayParams;
 	SimStatistics simStats;
@@ -269,6 +276,14 @@ public:
 
 	float * mField;
 	float * newMField;
+	
+	std::vector<int> obstacleOutlineXs;
+	std::vector<int> obstacleOutlineYs;
+
+
+
+	float netPressureX = 0.f;
+	float netPressureY = 0.f;
 
 
 	//for optimizations in solve incompressibility function 
@@ -277,6 +292,8 @@ public:
 	float* sx1Field;
 	float* sy0Field;
 	float* sy1Field;
+
+	float* oField; //outline of the obstacle
 
 
 

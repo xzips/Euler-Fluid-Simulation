@@ -13,7 +13,7 @@ int main() {
     DisplayParameters displayParams;
 
     size_t fixedHeight = 800;
-    simParams.SetGridSize(400, 200);
+    simParams.SetGridSize(400, 300);
     simParams.numIterations = 100;
 
 #ifdef CXXDROID_COMPAT
@@ -26,9 +26,14 @@ int main() {
     displayParams.windowHeight = fixedHeight;
     displayParams.maxFps = 120;
 
+    //simParams.windTunnelSpeed = 2.f;
+    //float dt = 0.005f;
+    
     simParams.windTunnelSpeed = 2.f;
+    float dt = 0.005f;
+
     simParams.overRelaxation = 1.9f;
-    simParams.gravity = 10.f;
+    simParams.gravity = 0.f;
 
 	sf::RenderWindow window(sf::VideoMode(displayParams.windowWidth, displayParams.windowHeight), "Euler Fluid Simulation", sf::Style::Close);
     window.setFramerateLimit(displayParams.maxFps);
@@ -92,7 +97,7 @@ int main() {
         float fps = 1.f / (currentTime);
 
         simClock.restart();
-        fluidSim.Simulate(0.005f);
+        fluidSim.Simulate(dt);
         float simTime = (float)simClock.restart().asMicroseconds();
 
         renderClock.restart();

@@ -48,11 +48,14 @@ FluidSim::FluidSim(SimParameters simParams, DisplayParameters displayParams)
 	sy0Field = new float[simParams.n_cells];
 	sy1Field = new float[simParams.n_cells];
 
+	oField = new float[simParams.n_cells];
+
 
 	//memset all of them to 0.0
 	std::fill(uField, uField + simParams.n_cells, 0.0f);
 	std::fill(vField, vField + simParams.n_cells, 0.0f);
 	std::fill(sField, sField + simParams.n_cells, 0.0f);
+	std::fill(oField, oField + simParams.n_cells, 0.0f);
 	std::fill(newUField, newUField + simParams.n_cells, 0.0f);
 	std::fill(newVField, newVField + simParams.n_cells, 0.0f);
 	std::fill(pField, pField + simParams.n_cells, 0.0f);
@@ -175,6 +178,30 @@ void FluidSim::Render(sf::RenderWindow& window)
 					//color = sf::Color(28, 91, 152, 255);
 				}
 
+				if (oField[i*simParams.n_y + j] == 0.f)
+				{
+					//get index of this point within the sorted obstacle outline list of points
+					int idx = -1;
+
+					for (int k = 0; k < obstacleOutlineXs.size(); k++)
+					{
+						if (obstacleOutlineXs[k] == i && obstacleOutlineYs[k] == j)
+						{
+							idx = k;
+							break;
+						}
+					}
+
+					//set color based on the index
+					//color = SciColorMaps::Plasma((float)idx / (float)obstacleOutlineXs.size());
+
+					//color = sf::Color(255, 0, 128, 255);
+
+
+
+
+				}
+
 
 				image.setPixel(i, j, color);
 			}
@@ -182,6 +209,9 @@ void FluidSim::Render(sf::RenderWindow& window)
 		}
 
 	}
+
+
+	
 
 	if (displayParams.displayMode == DisplayParameters::DisplayMode::PRESSURE)
 	{
@@ -200,7 +230,7 @@ void FluidSim::Render(sf::RenderWindow& window)
 			}
 		}
 
-		std::cout << "Min P: " << min_P << " Max P: " << max_P << std::endl;
+		//std::cout << "Min P: " << min_P << " Max P: " << max_P << std::endl;
 
 		sf::Color color;
 		//for each sim box in the texture, set the color based on the m value
@@ -226,7 +256,7 @@ void FluidSim::Render(sf::RenderWindow& window)
 
 				if (sField[i * simParams.n_y + j] == 0)
 				{
-					//color = sf::Color(28, 91, 152, 255);
+					color = sf::Color(28, 91, 152, 255);
 				}
 
 				image.setPixel(i, j, color);
@@ -389,7 +419,9 @@ void FluidSim::Render(sf::RenderWindow& window)
 			}
 		}
 	}
+	
 
+	//draw equidistantPointsOnBoundary as a line
 
 
 	//update the texture
@@ -408,6 +440,43 @@ void FluidSim::Render(sf::RenderWindow& window)
 	{
 		obs.DrawObstaclePretty(window);
 	}
+
+
+
+	bool showDebugNormals = true;
+
+	float simToScreenTransformX = (float)window.getSize().x / simParams.n_x;
+	float simToScreenTransformY = (float)window.getSize().y / simParams.n_y;
+
+	//draw boundaryNormals starting at the center of the cell and ending at the center of the cell + the normal * 10
+	if (showDebugNormals)
+	{
+		for (size_t i = 0; i < boundaryNormals.size(); i++)
+
+		{
+			//start at obstacleOutlineXs[i], obstacleOutlineYs[i], end at that plus the normal * 10
+			sf::Vector2f start = sf::Vector2f(obstacleOutlineXs[i] * simToScreenTransformX, obstacleOutlineYs[i] * simToScreenTransformY);
+			sf::Vector2f end = start + boundaryNormals[i] * 40.f;
+
+			
+			
+			sf::Vertex line[] =
+			{
+				sf::Vertex(start),
+				sf::Vertex(end)
+			};
+
+			//window.draw(line, 2, sf::Lines);
+
+
+		}
+		
+
+	}
+
+
+
+
 }
 
 
@@ -590,10 +659,6 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 */
 
 
-
-
-
-
 #ifndef CXXDROID_COMPAT
 
 //takes about 50ms to solve a 600x400 grid with 200 steps on a 12-core 3.8GHz Ryzen. that's approx 9x performance gain
@@ -653,7 +718,7 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 	float* divField = newUField;
 
 
-	std::cout << "sField values Pre-computation took " << clock.getElapsedTime().asSeconds() * 1000.f << " ms" << std::endl;
+	//std::cout << "sField values Pre-computation took " << clock.getElapsedTime().asSeconds() * 1000.f << " ms" << std::endl;
 
 	clock.restart();
 
@@ -773,7 +838,7 @@ void FluidSim::SolveIncompressibility(size_t numIterations, float dt)
 	}
 
 
-	std::cout << "SolveIncompressibility V4 main loop took: " << clock.getElapsedTime().asSeconds() * 1000.f << " ms" << std::endl;
+	//std::cout << "SolveIncompressibility V4 main loop took: " << clock.getElapsedTime().asSeconds() * 1000.f << " ms" << std::endl;
 
 
 	//get min and max
@@ -1051,7 +1116,7 @@ void FluidSim::AdvectVelocity(float dt) {
 		}
 	}
 
-	std::cout << "AdvectVelocity main loop: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
+	//std::cout << "AdvectVelocity main loop: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 
 	// Approx 0.3ms
 	memcpy(uField, newUField, simParams.n_cells * sizeof(float));
@@ -1152,21 +1217,21 @@ void FluidSim::Simulate(float dt) {
 
 	clock.restart();
 	SolveIncompressibility(simParams.numIterations, dt);
-	std::cout << "Time taken to solve incompressibility: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
+	//std::cout << "Time taken to solve incompressibility: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 	
 	clock.restart();
 	SolveBoundaries();
-	std::cout << "Time taken to solve boundaries: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
+	//std::cout << "Time taken to solve boundaries: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 	
 	
 	clock.restart();
 	AdvectVelocity(dt);
-	std::cout << "Time taken to advect velocity: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
+	//std::cout << "Time taken to advect velocity: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 
 	
 	clock.restart();
 	AdvectDye(dt);
-	std::cout << "Time taken to advect dye: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
+	//std::cout << "Time taken to advect dye: " << clock.getElapsedTime().asSeconds() * 1000.f << std::endl;
 
 	//ApplyGravity(dt, simParams.gravity);
 }
@@ -1211,7 +1276,6 @@ void FluidSim::AddDyeSource(float x, float y, float width, float height, float d
 
 }
 
-
 void FluidSim::SetObstacle(float x, float y, float r) {
 
 	float vx = 0.0;
@@ -1248,6 +1312,15 @@ void FluidSim::SetObstacle(float x, float y, float r) {
 	
 }
 
+void FluidSim::ComputePressureIntegral()
+{
+	//compute pressure intergal on the closed boundary of the s field
+	//obstacleOutlineIndices
+
+	
+
+
+}
 
 
 void Obstacle::SetObstacleSField(FluidSim* fluidSim)
@@ -1422,12 +1495,188 @@ void Obstacle::SetObstacleSField(FluidSim* fluidSim)
 				}
 			}
 		}
+
+
 	}
+
+
+	//now we need to set the oField which contains just the points that are the outline on the boundary cells set by this function
+	//what we will do is (admitatly inefficiently) move over the sField and mark cells that are 1) themselves fluid cells and 2) have a neighbour that is a boundary cell
+	//and also must not be an edge of the image cell, but since the way this function is called we can be sure that these have not been set yet
+
+	
+
+
+	fluidSim->obstacleOutlineXs.clear();
+	fluidSim->obstacleOutlineYs.clear();
+
+
+	//save the outline points
+	for (size_t i = 1; i < n_x - 2; i++) {
+		for (size_t j = 1; j < n_y - 2; j++) {
+			if (fluidSim->sField[i * n_y + j] == 1.0f)
+			{
+				if (
+					fluidSim->sField[(i - 1) * n_y + j] == 0.0f ||
+					fluidSim->sField[(i + 1) * n_y + j] == 0.0f ||
+					fluidSim->sField[i * n_y + j - 1] == 0.0f ||
+					fluidSim->sField[i * n_y + j + 1] == 0.0f)
+				{
+					fluidSim->oField[i * n_y + j] = 0.0f;
+					fluidSim->obstacleOutlineXs.push_back(i);
+					fluidSim->obstacleOutlineYs.push_back(j);
+				}
+			}
+		}
+	}
+
+	//go through outline points and sort them with relative spatial distance, i.e. we want to 
+	//put points that are adjacent next to each other. do this by:
+	// 1. start arbitrary point, let's say the one at index 0
+	// 2. search through all other points in the list, try to find points with distance 1 in x OR y ONLY
+	// 3. if none of of those are found, then search for points in the diagonals with distance sqrt(2)
+	// 4. if none of those are found, print error and stop the point sorting process but do not throw error
+	
+	std::vector<int> sortedOutlineXs;
+	std::vector<int> sortedOutlineYs;
+	size_t nOutlinePoints = fluidSim->obstacleOutlineXs.size();
+	std::vector<bool> visited(nOutlinePoints, false);
+
+	// Start from the first point
+	sortedOutlineXs.push_back(fluidSim->obstacleOutlineXs[0]);
+	sortedOutlineYs.push_back(fluidSim->obstacleOutlineYs[0]);
+	visited[0] = true;
+
+	int lastIndex = -1;
+	int currentIndex = 0;
+
+	for (size_t i = 1; i < nOutlinePoints; i++)
+	{
+		int bestScore = INT_MAX;
+		int nextIndex = -1;
+
+		for (size_t j = 0; j < nOutlinePoints; j++)
+		{
+			if (visited[j])
+				continue;
+
+			int dx = fluidSim->obstacleOutlineXs[j] - fluidSim->obstacleOutlineXs[currentIndex];
+			int dy = fluidSim->obstacleOutlineYs[j] - fluidSim->obstacleOutlineYs[currentIndex];
+
+			// Check if the point is adjacent (including diagonals)
+			if ((abs(dx) <= 1 && abs(dy) <= 1) && !(dx == 0 && dy == 0))
+			{
+				int distSq = dx * dx + dy * dy;
+				int score = 0;
+
+				if (lastIndex != -1)
+				{
+					int prev_dx = fluidSim->obstacleOutlineXs[currentIndex] - fluidSim->obstacleOutlineXs[lastIndex];
+					int prev_dy = fluidSim->obstacleOutlineYs[currentIndex] - fluidSim->obstacleOutlineYs[lastIndex];
+
+					int dotProduct = (prev_dx * dx + prev_dy * dy);
+
+					// Use negative dotProduct to prefer smaller angles (continuing in the same direction)
+					// Adjust the weighting factor as needed (here, 10 is arbitrary)
+					score = -10 * dotProduct + distSq;
+				}
+				else
+				{
+					// For the first move, use distance squared as the score
+					score = distSq;
+				}
+
+				if (score < bestScore)
+				{
+					bestScore = score;
+					nextIndex = j;
+				}
+			}
+		}
+
+		if (nextIndex != -1)
+		{
+			sortedOutlineXs.push_back(fluidSim->obstacleOutlineXs[nextIndex]);
+			sortedOutlineYs.push_back(fluidSim->obstacleOutlineYs[nextIndex]);
+			visited[nextIndex] = true;
+
+			lastIndex = currentIndex;
+			currentIndex = nextIndex;
+		}
+		else
+		{
+			std::cout << "Error: could not find adjacent unvisited point from point " << currentIndex << std::endl;
+			break;
+		}
+	}
+
+	// Replace the original outline points with the sorted ones
+	fluidSim->obstacleOutlineXs = sortedOutlineXs;
+	fluidSim->obstacleOutlineYs = sortedOutlineYs;
+
+
+	fluidSim->ComputeBoundaryNormals();
+
+
 
 		
 
 }
+
+
+//std::vector<sf::Vector2f> equidistantPointsOnBoundary;
+void FluidSim::ComputeBoundaryNormals()
+{
+	//we've already compuuted obstacleOutlineXs and obstacleOutlineYs to be sorted such that we make a loop around the boundary
 	
+	//first get the average position of the shape
+	float avgX = 0;
+	float avgY = 0;
+
+	for (size_t i = 0; i < obstacleOutlineXs.size(); i++)
+	{
+		avgX += obstacleOutlineXs[i];
+		avgY += obstacleOutlineYs[i];
+	}
+
+	avgX /= obstacleOutlineXs.size();
+	avgY /= obstacleOutlineYs.size();
+
+	//now we need to compute the normals for each point on the boundary, simply do this by for each point taking the vector to the next point and rotating it 90 degrees
+	//then check that the normal is pointing outwards, if not, flip it, then normalize it
+	//then add it to the normals vector
+
+	boundaryNormals.clear();
+
+	for (size_t i = 0; i < obstacleOutlineXs.size(); i++)
+	{
+		sf::Vector2f currentPoint(obstacleOutlineXs[i], obstacleOutlineYs[i]);
+		sf::Vector2f nextPoint(obstacleOutlineXs[(i + 1) % obstacleOutlineXs.size()], obstacleOutlineYs[(i + 1) % obstacleOutlineXs.size()]);
+
+		sf::Vector2f normal = nextPoint - currentPoint;
+		normal = sf::Vector2f(-normal.y, normal.x);
+
+		//check if the normal is pointing outwards
+		sf::Vector2f avgToCurrent = currentPoint - sf::Vector2f(avgX, avgY);
+		float dot = normal.x * avgToCurrent.x + normal.y * avgToCurrent.y;
+
+		if (dot < 0)
+		{
+			normal = -normal;
+		}
+
+		//normalize the normal
+		float length = sqrt(normal.x * normal.x + normal.y * normal.y);
+		normal /= length;
+
+		boundaryNormals.push_back(normal);
+	}
+
+
+
+
+}
+
 
 	
 
@@ -1435,6 +1684,7 @@ void FluidSim::UpdateSField()
 {
 	//fill s field with 1 
 	std::fill(sField, sField + simParams.n_cells, 1.0f);
+	std::fill(oField, oField + simParams.n_cells, 1.0f);
 
 	
 	for (auto &obstacle : simParams.obstacles)

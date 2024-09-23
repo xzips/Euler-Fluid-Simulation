@@ -107,6 +107,12 @@ GUI::GUI(FluidSim* fluidSim, int windowWidth, int windowHeight, int maxFps) {
     nextModelText.setPosition(nextModelButtonPosition.x + 32, nextModelButtonPosition.y + 12);
 
 
+    netPressureText.setFont(font);
+    netPressureText.setCharacterSize(18);
+    netPressureText.setFillColor(sf::Color::White);
+    netPressureText.setString("Net Pressure: ");
+    netPressureText.setPosition(5, 50);
+
 
 
     // Initialize visualization title and buttons
@@ -255,6 +261,9 @@ void GUI::update(sf::RenderWindow& window, const sf::Vector2f& pointerPosition, 
     }
 
 
+   // netPressureText.setString(
+
+
 
     sf::Vector2f simSpaceMousePosition = sf::Vector2f((float)pointerPosition.x / window.getSize().y, (float)pointerPosition.y / window.getSize().y);
 
@@ -328,6 +337,7 @@ void GUI::draw(sf::RenderWindow& window) {
     window.draw(previousModelText);
     window.draw(nextModelButton);
     window.draw(nextModelText);
+    window.draw(netPressureText);
 
     // Draw visualization selector
     window.draw(visualizationTitleText);

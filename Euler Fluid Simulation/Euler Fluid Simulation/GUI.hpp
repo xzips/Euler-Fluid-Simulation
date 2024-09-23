@@ -31,6 +31,8 @@ private:
 
     sf::Text selectedModelText;
 
+    sf::Text netPressureText;
+
     sf::Font font;
 
     sf::Vector2f dragBeginPosition;
